@@ -35,7 +35,22 @@ Individual stages: `make generate verify graph s6 s1 s2 baseline optimise evalua
 
 ## Results
 
-_Filled at the end of the build day by `make report` (`results/final/REPORT.md`). Table 7 (four-condition agent readiness) is pasted here._
+The C10 reporter and dashboard are implemented. Live experiment outputs are not yet available; `make report` currently generates an **incomplete** report and exits **2**. `MISSING` is unknown, not a measured zero.
+
+Table 7 — four-condition held-out readiness (current generated report; no live observations):
+
+| app | condition | n | success % [95% CI] | steps [95% CI] | tokens [95% CI] | policy % [95% CI] | unapproved calls | quarantined calls |
+|:---|:---|---:|:---|:---|:---|:---|:---|:---|
+| shop | raw_dom | 0 | MISSING | MISSING | MISSING | MISSING | unknown | unknown |
+| admin | raw_dom | 0 | MISSING | MISSING | MISSING | MISSING | unknown | unknown |
+| shop | generated | 0 | MISSING | MISSING | MISSING | MISSING | unknown | unknown |
+| admin | generated | 0 | MISSING | MISSING | MISSING | MISSING | unknown | unknown |
+| shop | verified | 0 | MISSING | MISSING | MISSING | MISSING | unknown | unknown |
+| admin | verified | 0 | MISSING | MISSING | MISSING | MISSING | unknown | unknown |
+| shop | optimised | 0 | MISSING | MISSING | MISSING | MISSING | unknown | unknown |
+| admin | optimised | 0 | MISSING | MISSING | MISSING | MISSING | unknown | unknown |
+
+Run `make report` after the upstream experiments to regenerate [REPORT.md](results/final/REPORT.md) and [numbers.json](results/final/numbers.json). The reporter copies the same JSON to `dashboard/public/numbers.json`; `cd dashboard && npm ci && npm run dev` opens the dashboard at `http://127.0.0.1:5173`. Update this table from the generated Table 7 when live results exist. See [dashboard instructions](dashboard/README.md).
 
 ## Layout
 

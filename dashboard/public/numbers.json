@@ -1,0 +1,421 @@
+{
+  "complete": false,
+  "execution": "unknown",
+  "generated_at": "2026-10-15T18:54:28.051643+00:00",
+  "git_sha": "1fb0ea88cca1c434d851782175f189a12e90e78f",
+  "missing": [
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/evalx/run.json optimisation_selection.admin",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/evalx/run.json optimisation_selection.shop",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json admin/multimodal_structured with training n>0",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json admin/text_structured with training n>0",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json admin/text_trace with training n>0",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json shop/multimodal_structured with training n>0",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json shop/text_structured with training n>0",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json shop/text_trace with training n>0",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/s1/metrics.json",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/s2/metrics.json",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/s6/metrics.json",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/admin.tools.json (nonempty generated tool set required)",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/shop.tools.json (nonempty generated tool set required)",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/optimised.jsonl",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/optimised.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/optimised.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/raw_dom.jsonl",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/raw_dom.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/raw_dom.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+    "MISSING: /Users/ananyaganesan/specx-shawshank/results/verdicts/f1.jsonl (verification evidence)",
+    "MISSING: completed /Users/ananyaganesan/specx-shawshank/results/evalx/run.json",
+    "MISSING: completed /Users/ananyaganesan/specx-shawshank/results/f2/run.json",
+    "MISSING: paired steps comparison admin: generated -> verified",
+    "MISSING: paired steps comparison admin: raw_dom -> generated",
+    "MISSING: paired steps comparison admin: verified -> optimised",
+    "MISSING: paired steps comparison shop: generated -> verified",
+    "MISSING: paired steps comparison shop: raw_dom -> generated",
+    "MISSING: paired steps comparison shop: verified -> optimised",
+    "MISSING: paired success comparison admin: generated -> verified",
+    "MISSING: paired success comparison admin: raw_dom -> generated",
+    "MISSING: paired success comparison admin: verified -> optimised",
+    "MISSING: paired success comparison shop: generated -> verified",
+    "MISSING: paired success comparison shop: raw_dom -> generated",
+    "MISSING: paired success comparison shop: verified -> optimised",
+    "MISSING: paired tokens comparison admin: generated -> verified",
+    "MISSING: paired tokens comparison admin: raw_dom -> generated",
+    "MISSING: paired tokens comparison admin: verified -> optimised",
+    "MISSING: paired tokens comparison shop: generated -> verified",
+    "MISSING: paired tokens comparison shop: raw_dom -> generated",
+    "MISSING: paired tokens comparison shop: verified -> optimised"
+  ],
+  "models": {
+    "agent": [],
+    "reviser": [],
+    "tool_set_versions": []
+  },
+  "n": {
+    "generated": {
+      "admin": 0,
+      "shop": 0
+    },
+    "optimised": {
+      "admin": 0,
+      "shop": 0
+    },
+    "raw_dom": {
+      "admin": 0,
+      "shop": 0
+    },
+    "verified": {
+      "admin": 0,
+      "shop": 0
+    }
+  },
+  "notes": [],
+  "provenance": {
+    "f2_training_n": {
+      "admin": 0,
+      "shop": 0
+    },
+    "optimisation_selection": {},
+    "results_dir": "/Users/ananyaganesan/specx-shawshank/results",
+    "run_metadata": {
+      "evalx": {},
+      "f2": {}
+    }
+  },
+  "quarantine": [],
+  "revisions": [],
+  "schema_version": 1,
+  "t1_generation": [],
+  "t2_verification": [],
+  "t3_s6": null,
+  "t4_s1": null,
+  "t5_s2": null,
+  "t6_f2": null,
+  "t7_readiness": {
+    "comparisons": [],
+    "conditions": {
+      "generated": {
+        "admin": {
+          "mean_steps": null,
+          "mean_steps_ci": [
+            null,
+            null
+          ],
+          "mean_tokens": null,
+          "mean_tokens_ci": [
+            null,
+            null
+          ],
+          "n": 0,
+          "policy_violation_rate": null,
+          "policy_violation_rate_ci": [
+            null,
+            null
+          ],
+          "quarantined_tool_calls": 0,
+          "success_rate": null,
+          "success_rate_ci": [
+            null,
+            null
+          ],
+          "unapproved_calls": 0,
+          "unapproved_rate": null,
+          "unapproved_rate_ci": [
+            null,
+            null
+          ]
+        },
+        "shop": {
+          "mean_steps": null,
+          "mean_steps_ci": [
+            null,
+            null
+          ],
+          "mean_tokens": null,
+          "mean_tokens_ci": [
+            null,
+            null
+          ],
+          "n": 0,
+          "policy_violation_rate": null,
+          "policy_violation_rate_ci": [
+            null,
+            null
+          ],
+          "quarantined_tool_calls": 0,
+          "success_rate": null,
+          "success_rate_ci": [
+            null,
+            null
+          ],
+          "unapproved_calls": 0,
+          "unapproved_rate": null,
+          "unapproved_rate_ci": [
+            null,
+            null
+          ]
+        }
+      },
+      "optimised": {
+        "admin": {
+          "mean_steps": null,
+          "mean_steps_ci": [
+            null,
+            null
+          ],
+          "mean_tokens": null,
+          "mean_tokens_ci": [
+            null,
+            null
+          ],
+          "n": 0,
+          "policy_violation_rate": null,
+          "policy_violation_rate_ci": [
+            null,
+            null
+          ],
+          "quarantined_tool_calls": 0,
+          "success_rate": null,
+          "success_rate_ci": [
+            null,
+            null
+          ],
+          "unapproved_calls": 0,
+          "unapproved_rate": null,
+          "unapproved_rate_ci": [
+            null,
+            null
+          ]
+        },
+        "shop": {
+          "mean_steps": null,
+          "mean_steps_ci": [
+            null,
+            null
+          ],
+          "mean_tokens": null,
+          "mean_tokens_ci": [
+            null,
+            null
+          ],
+          "n": 0,
+          "policy_violation_rate": null,
+          "policy_violation_rate_ci": [
+            null,
+            null
+          ],
+          "quarantined_tool_calls": 0,
+          "success_rate": null,
+          "success_rate_ci": [
+            null,
+            null
+          ],
+          "unapproved_calls": 0,
+          "unapproved_rate": null,
+          "unapproved_rate_ci": [
+            null,
+            null
+          ]
+        }
+      },
+      "raw_dom": {
+        "admin": {
+          "mean_steps": null,
+          "mean_steps_ci": [
+            null,
+            null
+          ],
+          "mean_tokens": null,
+          "mean_tokens_ci": [
+            null,
+            null
+          ],
+          "n": 0,
+          "policy_violation_rate": null,
+          "policy_violation_rate_ci": [
+            null,
+            null
+          ],
+          "quarantined_tool_calls": 0,
+          "success_rate": null,
+          "success_rate_ci": [
+            null,
+            null
+          ],
+          "unapproved_calls": 0,
+          "unapproved_rate": null,
+          "unapproved_rate_ci": [
+            null,
+            null
+          ]
+        },
+        "shop": {
+          "mean_steps": null,
+          "mean_steps_ci": [
+            null,
+            null
+          ],
+          "mean_tokens": null,
+          "mean_tokens_ci": [
+            null,
+            null
+          ],
+          "n": 0,
+          "policy_violation_rate": null,
+          "policy_violation_rate_ci": [
+            null,
+            null
+          ],
+          "quarantined_tool_calls": 0,
+          "success_rate": null,
+          "success_rate_ci": [
+            null,
+            null
+          ],
+          "unapproved_calls": 0,
+          "unapproved_rate": null,
+          "unapproved_rate_ci": [
+            null,
+            null
+          ]
+        }
+      },
+      "verified": {
+        "admin": {
+          "mean_steps": null,
+          "mean_steps_ci": [
+            null,
+            null
+          ],
+          "mean_tokens": null,
+          "mean_tokens_ci": [
+            null,
+            null
+          ],
+          "n": 0,
+          "policy_violation_rate": null,
+          "policy_violation_rate_ci": [
+            null,
+            null
+          ],
+          "quarantined_tool_calls": 0,
+          "success_rate": null,
+          "success_rate_ci": [
+            null,
+            null
+          ],
+          "unapproved_calls": 0,
+          "unapproved_rate": null,
+          "unapproved_rate_ci": [
+            null,
+            null
+          ]
+        },
+        "shop": {
+          "mean_steps": null,
+          "mean_steps_ci": [
+            null,
+            null
+          ],
+          "mean_tokens": null,
+          "mean_tokens_ci": [
+            null,
+            null
+          ],
+          "n": 0,
+          "policy_violation_rate": null,
+          "policy_violation_rate_ci": [
+            null,
+            null
+          ],
+          "quarantined_tool_calls": 0,
+          "success_rate": null,
+          "success_rate_ci": [
+            null,
+            null
+          ],
+          "unapproved_calls": 0,
+          "unapproved_rate": null,
+          "unapproved_rate_ci": [
+            null,
+            null
+          ]
+        }
+      }
+    }
+  },
+  "table_issues": {
+    "t1_generation": [
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/shop.tools.json (nonempty generated tool set required)",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/admin.tools.json (nonempty generated tool set required)"
+    ],
+    "t2_verification": [
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/shop.tools.json (nonempty generated tool set required)",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/admin.tools.json (nonempty generated tool set required)",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/verdicts/f1.jsonl (verification evidence)"
+    ],
+    "t3_s6": [
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/s6/metrics.json"
+    ],
+    "t4_s1": [
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/s1/metrics.json"
+    ],
+    "t5_s2": [
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/s2/metrics.json"
+    ],
+    "t6_f2": [
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json",
+      "MISSING: completed /Users/ananyaganesan/specx-shawshank/results/f2/run.json",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json shop/text_trace with training n>0",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json shop/text_structured with training n>0",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json shop/multimodal_structured with training n>0",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json admin/text_trace with training n>0",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json admin/text_structured with training n>0",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json admin/multimodal_structured with training n>0"
+    ],
+    "t7_readiness": [
+      "MISSING: completed /Users/ananyaganesan/specx-shawshank/results/evalx/run.json",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/raw_dom.jsonl",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/raw_dom.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/raw_dom.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/optimised.jsonl",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/optimised.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/optimised.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
+      "MISSING: paired success comparison shop: raw_dom -> generated",
+      "MISSING: paired success comparison shop: generated -> verified",
+      "MISSING: paired success comparison shop: verified -> optimised",
+      "MISSING: paired success comparison admin: raw_dom -> generated",
+      "MISSING: paired success comparison admin: generated -> verified",
+      "MISSING: paired success comparison admin: verified -> optimised",
+      "MISSING: paired steps comparison shop: raw_dom -> generated",
+      "MISSING: paired steps comparison shop: generated -> verified",
+      "MISSING: paired steps comparison shop: verified -> optimised",
+      "MISSING: paired steps comparison admin: raw_dom -> generated",
+      "MISSING: paired steps comparison admin: generated -> verified",
+      "MISSING: paired steps comparison admin: verified -> optimised",
+      "MISSING: paired tokens comparison shop: raw_dom -> generated",
+      "MISSING: paired tokens comparison shop: generated -> verified",
+      "MISSING: paired tokens comparison shop: verified -> optimised",
+      "MISSING: paired tokens comparison admin: raw_dom -> generated",
+      "MISSING: paired tokens comparison admin: generated -> verified",
+      "MISSING: paired tokens comparison admin: verified -> optimised",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/evalx/run.json optimisation_selection.shop",
+      "MISSING: /Users/ananyaganesan/specx-shawshank/results/evalx/run.json optimisation_selection.admin"
+    ]
+  },
+  "warnings": [
+    "Evidence is unknown: these are not validated live experimental results."
+  ]
+}

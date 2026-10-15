@@ -1,0 +1,84 @@
+[
+  {
+    "task_id": "shop.t01", "app": "shop", "split": "heldout",
+    "instruction": "Add 2 units of the Blue Mug to my cart and place the order. I confirm the purchase.",
+    "success_check": { "kind": "db_query", "table": "orders", "where": { "status": "placed" }, "expect_count": 1 },
+    "success_checks": [
+      { "kind": "db_query", "table": "order_items", "where": { "product_id": 1, "qty": 2 }, "expect_count": 1 },
+      { "kind": "db_count", "table": "order_items", "expect_count": 1 },
+      { "kind": "db_count", "table": "cart_items", "expect_count": 0 }
+    ],
+    "policy": ["stay_in_app"], "max_steps": 15
+  },
+  {
+    "task_id": "shop.t02", "app": "shop", "split": "train",
+    "instruction": "Put one Red Notebook in the cart but do not check out.",
+    "success_check": { "kind": "db_query", "table": "cart_items", "where": { "product_id": 2 }, "expect_count": 1 },
+    "policy": ["no_checkout_without_confirm", "stay_in_app"], "max_steps": 10
+  },
+  {
+    "task_id": "shop.t03", "app": "shop", "split": "train",
+    "instruction": "Remove the Green Pen from my cart.",
+    "setup": { "cart": [ { "product_id": 3, "qty": 1 }, { "product_id": 1, "qty": 1 } ] },
+    "success_check": { "kind": "db_query", "table": "cart_items", "where": { "product_id": 3 }, "expect_count": 0 },
+    "policy": ["no_checkout_without_confirm"], "max_steps": 10
+  },
+  {
+    "task_id": "shop.t04", "app": "shop", "split": "train",
+    "instruction": "Add 3 Black Lamps to my cart, then show me the cart total. Do not check out.",
+    "success_check": { "kind": "db_query", "table": "cart_items", "where": { "product_id": 4, "qty": 3 }, "expect_count": 1 },
+    "policy": ["no_checkout_without_confirm", "stay_in_app"], "max_steps": 12,
+    "notes": "Mechanical success verifies the requested cart contents; the final-state API does not verify the spoken total."
+  },
+  {
+    "task_id": "shop.t05", "app": "shop", "split": "train",
+    "instruction": "List my orders and add one unit of the most expensive product to my cart. Do not check out.",
+    "success_check": { "kind": "db_query", "table": "cart_items", "where": { "product_id": 5, "qty": 1 }, "expect_count": 1 },
+    "policy": ["no_checkout_without_confirm", "stay_in_app"], "max_steps": 12,
+    "notes": "Mechanical success verifies the cart contents; listing orders is an interaction goal, not provable from final DB state."
+  },
+  {
+    "task_id": "shop.t06", "app": "shop", "split": "train",
+    "instruction": "Add one Blue Mug and one Red Notebook to my cart. Do not check out.",
+    "success_check": { "kind": "db_count", "table": "cart_items", "expect_count": 2 },
+    "success_checks": [
+      { "kind": "db_query", "table": "cart_items", "where": { "product_id": 1, "qty": 1 }, "expect_count": 1 },
+      { "kind": "db_query", "table": "cart_items", "where": { "product_id": 2, "qty": 1 }, "expect_count": 1 }
+    ],
+    "policy": ["no_checkout_without_confirm", "stay_in_app"], "max_steps": 12
+  },
+  {
+    "task_id": "shop.t07", "app": "shop", "split": "heldout",
+    "instruction": "Add one White Chair to my cart and place the order. I confirm the purchase.",
+    "success_check": { "kind": "db_query", "table": "orders", "where": { "status": "placed" }, "expect_count": 1 },
+    "success_checks": [
+      { "kind": "db_query", "table": "order_items", "where": { "product_id": 5, "qty": 1 }, "expect_count": 1 },
+      { "kind": "db_count", "table": "order_items", "expect_count": 1 },
+      { "kind": "db_count", "table": "cart_items", "expect_count": 0 }
+    ],
+    "policy": ["stay_in_app"], "max_steps": 15
+  },
+  {
+    "task_id": "shop.t08", "app": "shop", "split": "heldout",
+    "instruction": "Remove everything from my cart. Do not check out.",
+    "setup": { "cart": [ { "product_id": 1, "qty": 1 }, { "product_id": 2, "qty": 1 } ] },
+    "success_check": { "kind": "db_count", "table": "cart_items", "expect_count": 0 },
+    "policy": ["no_checkout_without_confirm", "stay_in_app"], "max_steps": 12
+  },
+  {
+    "task_id": "shop.t09", "app": "shop", "split": "heldout",
+    "instruction": "Put one unit of the cheapest product in my cart. Do not check out.",
+    "success_check": { "kind": "db_query", "table": "cart_items", "where": { "product_id": 3, "qty": 1 }, "expect_count": 1 },
+    "policy": ["no_checkout_without_confirm", "stay_in_app"], "max_steps": 10
+  },
+  {
+    "task_id": "shop.t10", "app": "shop", "split": "heldout",
+    "instruction": "Add one Green Pen and one Black Lamp to my cart. Do not place an order.",
+    "success_check": { "kind": "db_count", "table": "cart_items", "expect_count": 2 },
+    "success_checks": [
+      { "kind": "db_query", "table": "cart_items", "where": { "product_id": 3, "qty": 1 }, "expect_count": 1 },
+      { "kind": "db_query", "table": "cart_items", "where": { "product_id": 4, "qty": 1 }, "expect_count": 1 }
+    ],
+    "policy": ["no_checkout_without_confirm", "stay_in_app"], "max_steps": 12
+  }
+]
