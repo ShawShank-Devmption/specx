@@ -16,7 +16,7 @@ export class EventRecorder {
   private readonly all: EventRecord[] = [];
   private active = new Map<string, number>(); // run_id -> t0
   private defaultRun: string | null = null;
-  private phase: Phase = "pre";
+  private phases = new Map<string, Phase>();
   private seq = 0;
 
   constructor(
@@ -32,11 +32,12 @@ export class EventRecorder {
     const t0 = this.now();
     this.active = new Map(runIds.map((id) => [id, t0]));
     this.defaultRun = runIds[0] ?? null;
-    this.phase = "pre";
+    this.phases = new Map(runIds.map((id) => [id, "pre" as Phase]));
   }
 
-  setPhase(phase: Phase): void {
-    this.phase = phase;
+  /** Sets the phase of one run of the active group, or of every active run when `runId` is omitted. */
+  setPhase(phase: Phase, runId?: string): void {
+    for (const id of runId === undefined ? this.active.keys() : [runId]) if (this.active.has(id)) this.phases.set(id, phase);
   }
 
   /** Stops attribution (used on reset): later observations are dropped until the next begin(). */
@@ -49,7 +50,7 @@ export class EventRecorder {
     const id = runId !== undefined && this.active.has(runId) ? runId : this.defaultRun;
     const t0 = id === null ? undefined : this.active.get(id);
     if (id === null || t0 === undefined) return null;
-    const e: EventRecord = { session_id: this.sessionId, run_id: id, seq: this.seq++, t_ms: Math.round((this.now() - t0) * 10) / 10, phase: this.phase, kind, data };
+    const e: EventRecord = { session_id: this.sessionId, run_id: id, seq: this.seq++, t_ms: Math.round((this.now() - t0) * 10) / 10, phase: this.phases.get(id) ?? "pre", kind, data };
     this.all.push(e);
     this.sink?.(e);
     return e;

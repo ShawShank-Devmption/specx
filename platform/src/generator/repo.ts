@@ -81,7 +81,10 @@ function literals(src: string): Literal[] {
   for (let i = 0; i < src.length; i++) {
     const c = src[i];
     if (c === "/" && src[i + 1] === "/") i = src.indexOf("\n", i) === -1 ? src.length : src.indexOf("\n", i);
-    else if (c === "/" && src[i + 1] === "*") i = src.indexOf("*/", i + 2) + 1;
+    else if (c === "/" && src[i + 1] === "*") {
+      const end = src.indexOf("*/", i + 2);
+      i = end === -1 ? src.length : end + 1;
+    }
     else if (c === '"' || c === "'" || c === "`") {
       let j = i + 1;
       while (j < src.length && src[j] !== c) j += src[j] === "\\" ? 2 : 1;

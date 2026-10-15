@@ -25,9 +25,11 @@ interface Call {
   tool_id: string;
   args: Args;
 }
+/** Everything since the last reset that shaped the state a run started from; replay re-applies it. */
+type Step = { kind: "calls"; calls: Call[] } | { kind: "apply"; state: Record<string, unknown> } | { kind: "leak"; leak: string; delayMs: number };
 interface RunRecord {
   call: Call;
-  prefix: Call[][];
+  prefix: Step[];
   seed: number;
   source: Source;
   postObserveMs: number;
@@ -51,7 +53,7 @@ export class Session {
   private readonly recorder: EventRecorder;
   private tools = new Map<string, ToolDefinition>();
   private contracts = new Map<string, ToolContract>();
-  private history: Call[][] = [];
+  private history: Step[] = [];
   private readonly runs = new Map<string, RunRecord>();
   private resetSeed = 0;
   private counter = 0;
@@ -88,6 +90,24 @@ export class Session {
     const page = await this.context.newPage();
     observePage(page, this.manifest, (p, kind, data) => this.onEvent(p, kind, data));
     return page;
+  }
+
+  private snapshotHistory(): Step[] {
+    return this.history.map((s) => (s.kind === "calls" ? { kind: "calls", calls: s.calls.map((c) => ({ ...c })) } : { ...s }));
+  }
+
+  private prefixToolIds(prefix: Step[]): string[] {
+    return prefix.flatMap((s) => (s.kind === "calls" ? s.calls.map((c) => c.tool_id) : []));
+  }
+
+  /** At least `n` extra pages, each loaded on the app so relative fetches in handlers resolve. */
+  private async extraPagesFor(n: number): Promise<Page[]> {
+    while (this.extraPages.length < n) {
+      const p = await this.newPage();
+      await p.goto(this.manifest.home_path ?? "/");
+      this.extraPages.push(p);
+    }
+    return this.extraPages.slice(0, n);
   }
 
   private onEvent(page: Page | null, kind: EventRecord["kind"], data: Record<string, unknown>): void {
@@ -210,7 +230,7 @@ export class Session {
     const { tool, contract } = this.tool(toolId);
     const postObserveMs = opts.postObserveMs ?? 1500;
     const runId = `${this.id}_r${++this.counter}`;
-    const prefix = this.history.map((g) => g.map((c) => ({ ...c })));
+    const prefix = this.snapshotHistory();
     const started = new Date();
     const t0 = performance.now();
     const urlBefore = this.page.url();
@@ -221,10 +241,10 @@ export class Session {
     this.recorder.record("tool_start", { tool_id: toolId, args, mode });
     const { output, error } = await this.runHandler(this.page, tool.handler.code, args);
     this.recorder.record("tool_end", { status: error ? "error" : "ok", output, error });
+    this.recorder.setPhase("post");
     const emitted = new Set<unknown>();
     const early = await this.hook<{ events: AuditRow[] }>("GET", `/__test/audit?since=${Math.max(0, ...(dbBefore[this.manifest.audit_table]?.rows ?? []).map((r) => Number(r.id)))}`);
     this.emitAudit(early.events, runId, emitted);
-    this.recorder.setPhase("post");
     await sleep(postObserveMs);
     const dbAfter = await this.db();
     const newAudit = this.newAudit(dbBefore, dbAfter);
@@ -233,7 +253,7 @@ export class Session {
     const ctx: RunContext = { manifest: this.manifest, toolId, args, output, user: this.userOf(dbBefore), dbBefore, dbAfter, newAudit, events, dom: this.probe(this.page) };
     const ev = await evaluateRun(contract, ctx, { mode, handlerError: error });
 
-    this.history.push([{ tool_id: toolId, args }]);
+    this.history.push({ kind: "calls", calls: [{ tool_id: toolId, args }] });
     this.runs.set(runId, { call: { tool_id: toolId, args }, prefix, seed: this.resetSeed, source: opts.source, postObserveMs });
     const verdict: Verdict = {
       run_id: runId,
@@ -244,7 +264,7 @@ export class Session {
       metadata_revision: tool.metadata_revision,
       args,
       mode,
-      sequence_prefix: prefix.flat().map((c) => c.tool_id),
+      sequence_prefix: this.prefixToolIds(prefix),
       started_at: started.toISOString(),
       duration_ms: Math.round(performance.now() - t0),
       status: ev.status,
@@ -270,13 +290,8 @@ export class Session {
       const postObserveMs = opts.postObserveMs ?? 1500;
       const group = `${this.id}_g${++this.counter}`;
       const runIds = calls.map(() => `${this.id}_r${++this.counter}`);
-      while (this.extraPages.length < calls.length) {
-        const p = await this.newPage();
-        await p.goto(this.manifest.home_path ?? "/");
-        this.extraPages.push(p);
-      }
-      const pages = this.extraPages.slice(0, calls.length);
-      const prefix = this.history.map((g) => g.map((c) => ({ ...c })));
+      const pages = await this.extraPagesFor(calls.length);
+      const prefix = this.snapshotHistory();
       const started = new Date();
       const t0 = performance.now();
       const dbBefore = await this.db();
@@ -285,9 +300,15 @@ export class Session {
       this.recorder.begin(runIds);
       this.recorder.setPhase("during");
       resolved.forEach((c, i) => this.recorder.record("tool_start", { tool_id: c.tool_id, args: c.args, mode: "concurrent" }, runIds[i]));
-      const results = await Promise.all(resolved.map((c, i) => this.runHandler(pages[i] as Page, c.tool.handler.code, c.args)));
-      results.forEach((r, i) => this.recorder.record("tool_end", { status: r.error ? "error" : "ok", output: r.output, error: r.error }, runIds[i]));
-      this.recorder.setPhase("post");
+      // Each call enters its post phase as soon as its own handler returns.
+      const results = await Promise.all(
+        resolved.map(async (c, i) => {
+          const r = await this.runHandler(pages[i] as Page, c.tool.handler.code, c.args);
+          this.recorder.record("tool_end", { status: r.error ? "error" : "ok", output: r.output, error: r.error }, runIds[i]);
+          this.recorder.setPhase("post", runIds[i]);
+          return r;
+        }),
+      );
       await sleep(postObserveMs);
       const dbAfter = await this.db();
       const newAudit = this.newAudit(dbBefore, dbAfter);
@@ -313,7 +334,7 @@ export class Session {
             args: c.args,
             mode: "concurrent",
             concurrency_group: group,
-            sequence_prefix: prefix.flat().map((x) => x.tool_id),
+            sequence_prefix: this.prefixToolIds(prefix),
             started_at: started.toISOString(),
             duration_ms: Math.round(performance.now() - t0),
             status: ev.status,
@@ -327,7 +348,7 @@ export class Session {
           }),
         );
       }
-      this.history.push(calls.map((c) => ({ ...c })));
+      this.history.push({ kind: "calls", calls: calls.map((c) => ({ ...c })) });
       return { concurrency_group: group, verdicts };
     });
   }
@@ -338,10 +359,14 @@ export class Session {
       const rec = this.runs.get(runId);
       if (!rec) throw new SandboxError(404, "unknown_run", `run ${runId} not found in session ${this.id}`);
       await this.resetNow(rec.seed);
-      for (const group of rec.prefix) {
-        while (this.extraPages.length < group.length) this.extraPages.push(await this.newPage());
-        await Promise.all(group.map((c, i) => this.runHandler(group.length === 1 ? this.page : (this.extraPages[i] as Page), this.tool(c.tool_id).tool.handler.code, c.args)));
-        this.history.push(group.map((c) => ({ ...c })));
+      for (const step of rec.prefix) {
+        if (step.kind === "apply") await this.hook("POST", "/__test/apply", { state: step.state });
+        else if (step.kind === "leak") await this.hook("POST", "/__test/leak", { kind: step.leak, delay_ms: step.delayMs });
+        else {
+          const pages = step.calls.length === 1 ? [this.page] : await this.extraPagesFor(step.calls.length);
+          await Promise.all(step.calls.map((c, i) => this.runHandler(pages[i] as Page, this.tool(c.tool_id).tool.handler.code, c.args)));
+        }
+        this.history.push(step);
       }
       return this.invokeNow(rec.call.tool_id, rec.call.args, { source: rec.source, postObserveMs: rec.postObserveMs }, "replay");
     });
@@ -361,8 +386,13 @@ export class Session {
     }));
   }
 
-  domAction(a: DomAction): Promise<{ ok: true; aria: string; url: string }> {
+  /** Raw-DOM agent step. Recorded as its own run (`<session>_a<n>`) so its network effects are observable. */
+  domAction(a: DomAction): Promise<{ ok: true; run_id: string; aria: string; url: string }> {
     return this.serial(async () => {
+      const runId = `${this.id}_a${++this.counter}`;
+      this.pageRun.clear();
+      this.recorder.begin([runId]);
+      this.recorder.setPhase("during");
       switch (a.action) {
         case "navigate": {
           const target = new URL(a.url, this.manifest.base_url);
@@ -382,7 +412,8 @@ export class Session {
       }
       await sleep(300); // let fetch-driven reloads start
       await this.page.waitForLoadState("domcontentloaded").catch(() => undefined);
-      return { ok: true as const, aria: await observe(this.page), url: this.page.url() };
+      this.recorder.setPhase("post");
+      return { ok: true as const, run_id: runId, aria: await observe(this.page), url: this.page.url() };
     });
   }
 
@@ -397,6 +428,7 @@ export class Session {
   apply(state: Record<string, unknown>): Promise<void> {
     return this.serial(async () => {
       await this.hook("POST", "/__test/apply", { state });
+      this.history.push({ kind: "apply", state });
     });
   }
 
@@ -404,6 +436,7 @@ export class Session {
     if (!(LEAK_KINDS as readonly string[]).includes(kind)) throw new SandboxError(400, "bad_leak_kind", `unknown leak kind ${kind}`);
     return this.serial(async () => {
       await this.hook("POST", "/__test/leak", { kind, delay_ms: delayMs });
+      this.history.push({ kind: "leak", leak: kind, delayMs });
     });
   }
 

@@ -148,7 +148,12 @@ export function createSandbox(opts: { manifests: AppManifest[] }): Sandbox {
     res.json({ ok: true });
   });
 
+  app.use((req, res) => {
+    res.status(404).json({ error: { code: "not_found", message: `no route ${req.method} ${req.path}` } });
+  });
+
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    if ((err as { type?: string }).type === "entity.parse.failed") return res.status(400).json({ error: { code: "bad_request", message: "request body is not valid JSON" } });
     if (err instanceof ZodError) return res.status(400).json({ error: { code: "bad_request", message: err.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") } });
     if (err instanceof SandboxError) return res.status(err.status).json({ error: { code: err.code, message: err.message } });
     log("sandbox").error("unhandled", { message: (err as Error).message, stack: (err as Error).stack });

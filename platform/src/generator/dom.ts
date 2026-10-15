@@ -26,12 +26,13 @@ const isControl = (i: Item) => i.tag === "input" || i.tag === "select" || i.tag 
 const MAX_PAGES = 12;
 const MAX_PASSES = 3;
 
-function fillValue(i: Item): string | null {
+/** Values are unique per fill so a crawl never collides with rows an earlier click created (UNIQUE columns). */
+function fillValue(i: Item, n: number): string | null {
   if (i.tag === "select") return null; // keep the default option
   if (i.inputType === "number") return String(i.min ?? 1);
-  if (i.inputType === "email" || i.field === "email") return "crawl@example.com";
+  if (i.inputType === "email" || i.field === "email") return `crawl${n}@example.com`;
   if (i.inputType === "password") return null;
-  return `crawl_${i.field ?? "text"}`;
+  return `crawl_${i.field ?? "text"}_${n}`;
 }
 
 const domInputs = (items: Item[]): DomInput[] =>
@@ -51,37 +52,44 @@ export async function crawl(session: Session, opts: { settleMs?: number } = {}):
   const manifest = session.manifest;
   const page = session.crawlerPage();
   const samples: NetworkSample[] = [];
-  const pending = new Map<Request, TriggerRequest>();
-  const inflight: Promise<void>[] = [];
   let capturing: TriggerRequest[] | null = null;
+  let fills = 0;
 
-  page.on("request", (req) => {
-    if (!["fetch", "xhr"].includes(req.resourceType())) return;
+  const describe = (req: Request): TriggerRequest | null => {
+    if (!["fetch", "xhr"].includes(req.resourceType())) return null;
     const m = matchEndpoint(manifest, req.method(), req.url(), req.resourceType());
-    if (m.third_party) return;
+    if (m.third_party) return null;
     let body: unknown;
     try {
       body = req.postDataJSON() as unknown;
     } catch {
       body = undefined;
     }
-    const r: TriggerRequest = { method: req.method(), path: m.path, ...(m.pattern ? { pattern: m.pattern } : {}), ...(body === undefined || body === null ? {} : { body }) };
-    capturing?.push(r);
-    pending.set(req, r);
+    return { method: req.method(), path: m.path, ...(m.pattern ? { pattern: m.pattern } : {}), ...(body === undefined || body === null ? {} : { body }) };
+  };
+  page.on("request", (req) => {
+    const r = describe(req);
+    if (r) capturing?.push(r);
   });
-  page.on("response", (res) => {
-    const r = pending.get(res.request());
-    if (!r) return;
-    pending.delete(res.request());
-    inflight.push(
-      res
-        .json()
-        .catch(() => null)
-        .then((response: unknown) => {
-          samples.push({ method: r.method, path: r.path, ...(r.pattern ? { pattern: r.pattern } : {}), status: res.status(), ...(r.body === undefined ? {} : { request: r.body }), response });
-        }),
-    );
-  });
+  // Responses are read inside the route, before the page can navigate away (reload after a create/delete
+  // would otherwise discard the body), then handed back to the page unchanged.
+  await page.route(
+    (url) => manifest.approved_hosts.includes(url.host) && url.pathname.startsWith("/api/"),
+    async (route) => {
+      const r = describe(route.request());
+      if (!r) return route.continue();
+      const response = await route.fetch();
+      const text = await response.text();
+      let parsed: unknown = null;
+      try {
+        parsed = text ? (JSON.parse(text) as unknown) : null;
+      } catch {
+        parsed = null;
+      }
+      samples.push({ method: r.method, path: r.path, ...(r.pattern ? { pattern: r.pattern } : {}), status: response.status(), ...(r.body === undefined ? {} : { request: r.body }), response: parsed });
+      await route.fulfill({ response, body: text });
+    },
+  );
 
   // ---------------------------------------------------------------- page discovery
   await session.reset();
@@ -105,7 +113,7 @@ export async function crawl(session: Session, opts: { settleMs?: number } = {}):
   const fillAndClick = async (key: string): Promise<boolean> => {
     const items = await interactiveItems(page);
     for (const i of items.filter(isControl)) {
-      const v = fillValue(i);
+      const v = fillValue(i, ++fills);
       if (v !== null) await session.domAction({ action: "type", ref: i.ref, text: v });
     }
     const target = (await interactiveItems(page)).find((i) => isButton(i) && keyOf(i) === key);
@@ -155,6 +163,5 @@ export async function crawl(session: Session, opts: { settleMs?: number } = {}):
     await page.evaluate((url) => fetch(url).then((r) => r.text()), e.path.replace(/:\w+/g, "1"));
   }
   await sleep(200);
-  await Promise.all(inflight);
   return { pages: [...pages.keys()], triggers: [...triggers.values()], samples };
 }

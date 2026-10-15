@@ -45,6 +45,15 @@ describe("EventRecorder (post_phase_attribution)", () => {
     expect(r.record("console", {})?.run_id).toBe("a");
   });
 
+  it("tracks the phase per run in a concurrent group", () => {
+    const r = new EventRecorder("s1");
+    r.begin(["a", "b"]);
+    r.setPhase("during");
+    r.setPhase("post", "a");
+    expect(r.record("console", {}, "a")?.phase).toBe("post");
+    expect(r.record("console", {}, "b")?.phase).toBe("during");
+  });
+
   it("forwards every recorded event to the sink", () => {
     const seen: string[] = [];
     const r = new EventRecorder("s1", { sink: (e) => seen.push(e.kind) });

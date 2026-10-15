@@ -65,6 +65,14 @@ describe.runIf(integration)("generate (integration)", () => {
     expect(Object.keys(props)).toEqual(["id", "name", "price_cents", "stock"]);
   });
 
+  it("captures response shapes even when the UI navigates right after the call", () => {
+    const fields = (app: string, name: string) => Object.keys((out[app]?.tools.find((t) => t.name === name)?.output_schema?.properties ?? {}) as object);
+    expect(fields("shop", "place_order")).toEqual(["order_id", "total_cents"]);
+    expect(fields("admin", "create_user")).toContain("id");
+    expect(fields("admin", "update_user")).toContain("username");
+    expect(fields("admin", "delete_user")).toEqual(["id", "deleted"]);
+  });
+
   it("rejects the unapproved analytics route", () => {
     expect(out.shop?.rejected).toContainEqual({ ref: "POST /api/analytics", reason: "route is not an approved endpoint in the app manifest" });
   });

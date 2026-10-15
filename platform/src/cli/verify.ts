@@ -1,7 +1,8 @@
 /**
  * `specx verify --app <app> [--runs 3] [--observe 1000]` — F1 verification; writes verdicts to
  * results/verdicts/f1.jsonl and sets each tool's status in results/tools/<app>.tools.json.
- * `specx quarantine --app <app> [--from s1,s1_random,s1_coverage,s6_inject]` — folds later evidence in.
+ * `specx quarantine --app <app> [--from s1,s1_random,s1_coverage]` — folds fuzzing violations and S6's
+ * anomaly flags on the tool's own F1 runs into tool status. Never pass s6_inject: those leaks are injected.
  */
 import fs from "node:fs";
 import { chromium } from "playwright";
@@ -55,10 +56,13 @@ export async function verifyCommand(app: string, runs: number, postObserveMs: nu
 
 export function quarantineCommand(app: string, sources: string[]): void {
   const tools = readJson<ToolDefinition[]>(toolsPath(app));
+  if (sources.includes("s6_inject")) throw new Error("s6_inject violations are caused by injected leaks, not by the tools; S6 counts through anomaly flags on f1 runs instead");
   const verdicts = sources.flatMap((s) => readJsonl<Verdict>(verdictsPath(s))).filter((v) => v.app === app);
+  const f1 = readJsonl<Verdict>(verdictsPath("f1")).filter((v) => v.app === app);
   const missing = sources.filter((s) => !fs.existsSync(verdictsPath(s)));
-  const { tools: updated, changed } = foldQuarantine(tools, verdicts);
+  const { tools: updated, changed } = foldQuarantine(tools, { violations: verdicts, anomaly: f1 });
   writeRecords(toolsPath(app), "tool_definition", updated);
-  console.log(`${app}: read ${verdicts.length} verdicts from ${sources.length - missing.length}/${sources.length} sources${missing.length ? ` (missing: ${missing.join(", ")})` : ""}`);
+  const scored = f1.filter((v) => v.anomaly).length;
+  console.log(`${app}: read ${verdicts.length} fuzzing verdicts from ${sources.length - missing.length}/${sources.length} sources${missing.length ? ` (missing: ${missing.join(", ")})` : ""}; ${scored}/${f1.length} f1 verdicts carry S6 scores`);
   console.log(changed.length ? table(["newly quarantined", "signatures"], changed.map((c) => [c.tool_id, c.signatures.join("; ")])) : "no verified tool changed status");
 }

@@ -73,18 +73,27 @@ describe("producerFor", () => {
 });
 
 describe("foldQuarantine", () => {
-  it("quarantines verified tools with high-severity, non-precondition violations from later stages", () => {
-    const tools = [
-      { tool_id: "shop.a", status: "verified" },
-      { tool_id: "shop.b", status: "verified" },
-      { tool_id: "shop.c", status: "quarantined" },
-    ];
-    const verdicts = [
+  const tools = [
+    { tool_id: "shop.a", status: "verified" },
+    { tool_id: "shop.b", status: "verified" },
+    { tool_id: "shop.c", status: "quarantined" },
+  ];
+
+  it("quarantines verified tools with high-severity, non-precondition violations from fuzzing", () => {
+    const fuzz = [
       verdict({ tool_id: "shop.a", source: "s1", violations: [v("inv_stock_nonnegative", "high", "side_effect")] }),
       verdict({ tool_id: "shop.b", source: "s1", violations: [v("pre_x", "high", "precondition"), v("inv_storage_untouched", "medium", "storage")] }),
     ];
-    const r = foldQuarantine(tools, verdicts);
+    const r = foldQuarantine(tools, { violations: fuzz, anomaly: [] });
     expect(r.tools.map((t) => t.status)).toEqual(["quarantined", "verified", "quarantined"]);
     expect(r.changed).toEqual([{ tool_id: "shop.a", signatures: ["shop.t|inv_stock_nonnegative"] }]);
+  });
+
+  it("quarantines a tool whose own F1 runs S6 flags as anomalous in a majority of runs", () => {
+    const flagged = (id: string, f: boolean) => verdict({ tool_id: id, source: "f1", anomaly: { iforest_score: 0.9, lstm_error: 0.2, flagged: f } });
+    const f1 = [flagged("shop.a", true), flagged("shop.a", true), flagged("shop.a", false), flagged("shop.b", true), flagged("shop.b", false), flagged("shop.b", false)];
+    const r = foldQuarantine(tools, { violations: [], anomaly: f1 });
+    expect(r.tools.map((t) => t.status)).toEqual(["quarantined", "verified", "quarantined"]);
+    expect(r.changed).toEqual([{ tool_id: "shop.a", signatures: ["anomaly: 2/3 f1 runs flagged by S6"] }]);
   });
 });

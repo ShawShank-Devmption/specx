@@ -27,6 +27,16 @@ describe("parseSql", () => {
   });
 });
 
+describe("parseRoutes robustness", () => {
+  it("terminates on an unterminated block-comment opener inside a regex literal", async () => {
+    const fs = await import("node:fs");
+    const os = await import("node:os");
+    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "specx-repo-")), "server.js");
+    fs.writeFileSync(file, 'const re = /a\\/*b/;\napp.get("/api/x", (req, res) => res.json(1));\n');
+    expect(parseRoutes(file).map((r) => r.path)).toEqual(["/api/x"]);
+  });
+});
+
 describe("parseRoutes", () => {
   it("finds every route of the shop with its source line", () => {
     const api = shop.filter((r) => r.path.startsWith("/api/")).map((r) => `${r.method} ${r.path}`);

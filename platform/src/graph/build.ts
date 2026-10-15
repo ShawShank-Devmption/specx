@@ -31,6 +31,23 @@ function leaves(value: unknown, prefix = ""): [string, unknown][] {
   return prefix ? [[prefix, value]] : [];
 }
 
+/** Resource a tool acts on, from its name: shop.get_product -> product, shop.list_users -> user. */
+const resourceOf = (toolId: string) => (toolId.split(".").at(-1) ?? "").split("_").slice(1).join("_").replace(/s$/, "");
+
+/**
+ * Whether an id that `src` returned at `leafPath` can plausibly be the `param` of `dst`: same field name
+ * (view_cart items.product_id -> product_id), a bare `id` of the matching resource (get_product id ->
+ * product_id), or a resource id into a tool acting on that resource (create_user id -> update_user id).
+ */
+export function idCompatible(src: string, leafPath: string, dst: string, param: string): boolean {
+  const leaf = last(leafPath);
+  if (leaf === param) return leaf !== "id" || resourceOf(src) === resourceOf(dst);
+  const srcRes = resourceOf(src);
+  if (leaf === "id" && param.endsWith("_id")) return srcRes !== "" && srcRes.includes(param.slice(0, -3));
+  if (param === "id" && leaf.endsWith("_id")) return resourceOf(dst).includes(leaf.slice(0, -3));
+  return false;
+}
+
 const runOrder = (a: Verdict, b: Verdict) => a.started_at.localeCompare(b.started_at) || Number(/\d+$/.exec(a.run_id)?.[0] ?? 0) - Number(/\d+$/.exec(b.run_id)?.[0] ?? 0);
 
 export function valueFlowEdges(verdicts: Verdict[]): GraphEdge[] {
@@ -38,17 +55,17 @@ export function valueFlowEdges(verdicts: Verdict[]): GraphEdge[] {
   const bySession = new Map<string, Verdict[]>();
   for (const v of verdicts) bySession.set(v.session_id, [...(bySession.get(v.session_id) ?? []), v]);
   for (const runs of bySession.values()) {
-    let epoch: { tool: string; value: string }[] = [];
+    let epoch: { tool: string; path: string; value: string }[] = [];
     for (const d of [...runs].sort(runOrder)) {
       if (d.mode !== "concurrent" && (d.sequence_prefix ?? []).length === 0) epoch = [];
       for (const [field, value] of Object.entries(d.args)) {
         if (!isIdField(field) || value === null || value === undefined || typeof value === "boolean" || value === "") continue;
-        for (const src of epoch.filter((o) => o.tool !== d.tool_id && o.value === String(value))) {
+        for (const src of epoch.filter((o) => o.tool !== d.tool_id && o.value === String(value) && idCompatible(o.tool, o.path, d.tool_id, field))) {
           const key = `${src.tool}|${d.tool_id}|${field}`;
           found.set(key, { src: src.tool, dst: d.tool_id, type: "data", field, evidence: "trace", confidence: 1, label: true });
         }
       }
-      for (const [path, value] of leaves(d.output)) if (isIdField(last(path)) && value !== null && typeof value !== "boolean") epoch.push({ tool: d.tool_id, value: String(value) });
+      for (const [path, value] of leaves(d.output)) if (isIdField(last(path)) && value !== null && typeof value !== "boolean") epoch.push({ tool: d.tool_id, path, value: String(value) });
     }
   }
   return [...found.values()];

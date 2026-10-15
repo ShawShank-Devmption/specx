@@ -71,6 +71,21 @@ describe("valueFlowEdges", () => {
   it("links an id a tool returned to a later call's argument in the same reset epoch", () => {
     expect(valueFlowEdges(verdicts)).toEqual([{ src: "shop.get_product", dst: "shop.add_to_cart", type: "data", field: "product_id", evidence: "trace", confidence: 1, label: true }]);
   });
+  it("ignores coincidental matches between unrelated id spaces", () => {
+    const vs = [run("place_order", {}, { order_id: 3 }, [], "s3"), run("add_to_cart", { product_id: 3, qty: 1 }, {}, ["place_order"], "s3")];
+    expect(valueFlowEdges(vs)).toEqual([]);
+  });
+
+  it("links a list's item ids and same-named id fields", () => {
+    const vs = [
+      run("list_products", {}, { items: [{ id: 4 }] }, [], "s4"),
+      run("add_to_cart", { product_id: 4, qty: 1 }, {}, ["list_products"], "s4"),
+      run("view_cart", {}, { items: [{ product_id: 4 }] }, ["list_products", "add_to_cart"], "s4"),
+      run("remove_from_cart", { product_id: 4 }, {}, ["list_products", "add_to_cart", "view_cart"], "s4"),
+    ];
+    expect(valueFlowEdges(vs).map((e) => `${e.src}>${e.dst}`)).toEqual(["shop.list_products>shop.add_to_cart", "shop.list_products>shop.remove_from_cart", "shop.view_cart>shop.remove_from_cart"]);
+  });
+
   it("does not link values across reset epochs", () => {
     expect(valueFlowEdges([run("get_product", { id: 2 }, { id: 2 }, [], "s2"), run("add_to_cart", { product_id: 2, qty: 1 }, {}, [], "s2")])).toEqual([]);
   });

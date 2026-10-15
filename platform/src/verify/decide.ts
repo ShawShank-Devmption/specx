@@ -52,12 +52,23 @@ export function producerFor(table: string, contracts: ToolContract[], exclude: s
   return c?.tool_id ?? null;
 }
 
-/** Quarantine verified tools that later stages showed to have high-severity, non-precondition violations. */
-export function foldQuarantine<T extends { tool_id: string; status?: string }>(tools: T[], verdicts: Verdict[]): { tools: T[]; changed: { tool_id: string; signatures: string[] }[] } {
+/**
+ * Quarantine verified tools that later stages showed to be unsafe:
+ *  - `violations`: fuzzing verdicts (S1). Any high-severity, non-precondition violation counts. Leak-injection
+ *    runs (s6_inject) must not be passed here: their violations are caused by the harness, not the tool.
+ *  - `anomaly`: the tool's own F1 runs scored by S6; a majority of flagged runs counts (robust to S6's FPR).
+ */
+export function foldQuarantine<T extends { tool_id: string; status?: string }>(
+  tools: T[],
+  evidence: { violations: Verdict[]; anomaly: Verdict[] },
+): { tools: T[]; changed: { tool_id: string; signatures: string[] }[] } {
   const changed: { tool_id: string; signatures: string[] }[] = [];
   const out = tools.map((t) => {
     if (t.status !== "verified") return t;
-    const sigs = [...new Set(verdicts.filter((v) => v.tool_id === t.tool_id).flatMap((v) => v.violations.filter((x) => x.severity === "high" && x.category !== "precondition").map((x) => x.signature)))];
+    const sigs = [...new Set(evidence.violations.filter((v) => v.tool_id === t.tool_id).flatMap((v) => v.violations.filter((x) => x.severity === "high" && x.category !== "precondition").map((x) => x.signature)))];
+    const scored = evidence.anomaly.filter((v) => v.tool_id === t.tool_id && v.anomaly);
+    const flagged = scored.filter((v) => v.anomaly?.flagged).length;
+    if (scored.length > 0 && flagged * 2 > scored.length) sigs.push(`anomaly: ${flagged}/${scored.length} f1 runs flagged by S6`);
     if (!sigs.length) return t;
     changed.push({ tool_id: t.tool_id, signatures: sigs });
     return { ...t, status: "quarantined" };

@@ -142,4 +142,50 @@ describe.runIf(integration)("sandbox server (integration)", () => {
     const verdicts = await Promise.all(ids.map((id) => h.call<Verdict>("POST", `/sessions/${id}/invoke`, add)));
     expect(verdicts.map((v) => [v.body.status, v.body.effect_diff.db.cart_items?.inserted])).toEqual(Array(8).fill(["pass", 1]));
   });
+
+  it("replays a run whose prefix contains a concurrent group", async () => {
+    const id = await session();
+    await h.call("POST", `/sessions/${id}/invoke_concurrent`, { calls: [{ tool_id: "shop.add_to_cart", args: { product_id: 1, qty: 1 } }, { tool_id: "shop.add_to_cart", args: { product_id: 2, qty: 1 } }], source: "fixture", post_observe_ms: 200 });
+    const v = (await h.call<Verdict>("POST", `/sessions/${id}/invoke`, { tool_id: "shop.place_order", args: { confirm: true }, source: "fixture", post_observe_ms: 200 })).body;
+    expect(v.status).toBe("pass");
+    const r = (await h.call<Verdict>("POST", `/sessions/${id}/replay`, { run_id: v.run_id })).body;
+    expect(r.status).toBe("pass");
+    expect(r.effect_diff.db).toEqual(v.effect_diff.db);
+  });
+
+  it("replays a run whose pre-state came from apply", async () => {
+    const id = await session();
+    await h.call("POST", `/sessions/${id}/apply`, { state: { cart: [{ product_id: 3, qty: 1 }] } });
+    const v = (await h.call<Verdict>("POST", `/sessions/${id}/invoke`, { tool_id: "shop.place_order", args: { confirm: true }, source: "fixture", post_observe_ms: 200 })).body;
+    expect(v.status).toBe("pass");
+    const r = (await h.call<Verdict>("POST", `/sessions/${id}/replay`, { run_id: v.run_id })).body;
+    expect(r.status).toBe("pass");
+  });
+
+  it("labels everything after tool_end as post phase", async () => {
+    const id = await session();
+    const v = (await h.call<Verdict>("POST", `/sessions/${id}/invoke`, add)).body;
+    const events = (await h.call<{ events: { run_id: string; phase: string; kind: string }[] }>("GET", `/sessions/${id}/events?since_seq=0`)).body.events.filter((e) => e.run_id === v.run_id);
+    const end = events.findIndex((e) => e.kind === "tool_end");
+    expect(events.slice(end + 1).map((e) => e.phase)).toEqual(events.slice(end + 1).map(() => "post"));
+    expect(events.slice(end + 1).some((e) => e.kind === "audit")).toBe(true);
+  });
+
+  it("records the network events of raw DOM actions", async () => {
+    const id = await session();
+    const nav = (await h.call<{ aria: string }>("POST", `/sessions/${id}/dom_action`, { action: "navigate", url: "/products/1" })).body;
+    const ref = /button "Add to cart" \[ref=(e\d+)\]/.exec(nav.aria)?.[1];
+    const click = (await h.call<{ run_id: string }>("POST", `/sessions/${id}/dom_action`, { action: "click", ref })).body;
+    const events = (await h.call<{ events: { run_id: string; kind: string; data: { method?: string; path?: string } }[] }>("GET", `/sessions/${id}/events?since_seq=0`)).body.events;
+    expect(events.some((e) => e.run_id === click.run_id && e.kind === "network_request" && e.data.method === "POST" && e.data.path === "/api/cart")).toBe(true);
+  });
+
+  it("answers malformed JSON and unknown routes with the JSON error envelope", async () => {
+    const bad = await fetch(`${h.url}/sessions`, { method: "POST", headers: { "content-type": "application/json" }, body: "{nope" });
+    expect(bad.status).toBe(400);
+    expect(((await bad.json()) as { error: { code: string } }).error.code).toBe("bad_request");
+    const missing = await h.call<{ error: { code: string } }>("GET", "/nope");
+    expect(missing.status).toBe(404);
+    expect(missing.body.error.code).toBe("not_found");
+  });
 });

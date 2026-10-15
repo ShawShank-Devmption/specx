@@ -3,7 +3,7 @@
  *   generate   --app <app> [--namer template|llm]
  *   verify     --app <app> [--runs 3]
  *   graph      --app <app>
- *   quarantine --app <app> [--from s1,s1_random,s1_coverage,s6_inject]
+ *   quarantine --app <app> [--from s1,s1_random,s1_coverage]
  *   versions
  */
 import { pathToFileURL } from "node:url";
@@ -23,7 +23,7 @@ commands:
   graph       typed workflow graph -> results/graphs/<app>.graph.json (keeps S2's gnn edges)
   versions    record node, playwright and chromium versions -> results/final/platform_versions.json (no --app)
   quarantine  fold later evidence into tool status
-              --from s1,s1_random,s1_coverage,s6_inject (default)
+              --from s1,s1_random,s1_coverage (default); S6 counts via anomaly flags on f1 runs
 `;
 
 export async function main(argv: string[]): Promise<number> {
@@ -35,7 +35,7 @@ export async function main(argv: string[]): Promise<number> {
       namer: { type: "string", default: "template" },
       runs: { type: "string", default: "3" },
       observe: { type: "string", default: "1000" },
-      from: { type: "string", default: "s1,s1_random,s1_coverage,s6_inject" },
+      from: { type: "string", default: "s1,s1_random,s1_coverage" },
       help: { type: "boolean", short: "h", default: false },
     },
     strict: true,
