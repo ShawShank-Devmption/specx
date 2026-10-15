@@ -6,17 +6,25 @@
 import type { ElementHandle, Page } from "playwright";
 import { SandboxError } from "./errors.js";
 
-interface Item {
+export interface Item {
   ref: string;
   role: string;
   name: string;
+  tag: string;
+  testid?: string;
+  /** `name` attribute of form controls (the field it submits). */
+  field?: string;
+  inputType?: string;
+  min?: number;
+  max?: number;
   value?: string;
   options?: string[];
   href?: string;
 }
 
-export async function observe(page: Page): Promise<string> {
-  const items: Item[] = await page.evaluate(() => {
+/** Visible interactive elements, numbered e1..eN; also registers the refs used by refHandle(). */
+export async function interactiveItems(page: Page): Promise<Item[]> {
+  return page.evaluate(() => {
     const refs = new Map<string, Element>();
     (window as unknown as { __specxRefs: Map<string, Element> }).__specxRefs = refs;
     const out: Item[] = [];
@@ -30,14 +38,27 @@ export async function observe(page: Page): Promise<string> {
       const role = el.getAttribute("role") ?? ({ a: "link", button: "button", select: "combobox", textarea: "textbox" } as Record<string, string>)[tag] ?? (el.getAttribute("type") === "number" ? "spinbutton" : "textbox");
       const label = el.id ? document.querySelector(`label[for="${el.id}"]`)?.textContent : null;
       const name = (el.getAttribute("aria-label") ?? label ?? (el as HTMLElement).innerText ?? "").trim().slice(0, 80);
-      const item: Item = { ref, role, name };
-      if (tag === "input" || tag === "textarea" || tag === "select") item.value = (el as HTMLInputElement).value;
+      const item: Item = { ref, role, name, tag };
+      const testid = el.getAttribute("data-testid");
+      if (testid) item.testid = testid;
+      if (tag === "input" || tag === "textarea" || tag === "select") {
+        item.value = (el as HTMLInputElement).value;
+        const field = el.getAttribute("name");
+        if (field) item.field = field;
+        if (tag === "input") item.inputType = el.getAttribute("type") ?? "text";
+        if (el.hasAttribute("min")) item.min = Number(el.getAttribute("min"));
+        if (el.hasAttribute("max")) item.max = Number(el.getAttribute("max"));
+      }
       if (tag === "select") item.options = Array.from((el as HTMLSelectElement).options).map((o) => o.value);
       if (tag === "a") item.href = el.getAttribute("href") ?? "";
       out.push(item);
     }
     return out;
   });
+}
+
+export async function observe(page: Page): Promise<string> {
+  const items = await interactiveItems(page);
   const tree = await page.locator("body").ariaSnapshot({ timeout: 2000 }).catch(() => "");
   const lines = items.map((i) => {
     let s = `- ${i.role} "${i.name}" [ref=${i.ref}]`;

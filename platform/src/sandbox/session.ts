@@ -181,6 +181,11 @@ export class Session {
     return v;
   }
 
+  /** The session's main page. Only the F3 crawler uses this, to listen to request/response bodies. */
+  crawlerPage(): Page {
+    return this.page;
+  }
+
   // ------------------------------------------------------------------ public API (contracts/sandbox_api.md)
   loadTools(tools: ToolDefinition[], contracts: ToolContract[]): number {
     for (const t of tools) validate("tool_definition", t);
