@@ -3,7 +3,7 @@
 Owner: **Dev A** (`platform/src/sandbox/server.ts`). Client: **`python/specx/client/sandbox.py`** (Dev C writes it in hour 1, Dev B uses it).
 Transport: plain HTTP + JSON on `http://127.0.0.1:4000`. No auth. One sandbox process can hold many sessions; each session = one headless Chromium context + one seed-app DB state.
 
-All request/response bodies are JSON. Errors: `{"error": {"code": string, "message": string}}` with HTTP 4xx/5xx. Every response also carries `"api_version": "1"`.
+All request/response bodies are JSON. Errors: `{"error": {"code": string, "message": string}}` with HTTP 4xx/5xx (`bad_request`, `unknown_session`, `unknown_tool`, `unknown_run`, `unknown_ref`, `scope_exceeded`, `missing_contract`, `invalid_record`, `app_error`, `internal`). Every response carries the header `x-specx-api-version: 1` — not a body field, so a verdict body validates against `verdict.schema.json` as-is.
 
 ## Lifecycle
 
