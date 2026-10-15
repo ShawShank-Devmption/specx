@@ -1,0 +1,15 @@
+[
+  {
+    "task_id": "admin.t10",
+    "app": "admin",
+    "instruction": "Deactivate bob and make dana an admin.",
+    "split": "heldout",
+    "setup": { "users": [ { "username": "dana", "email": "dana@example.com", "role": "viewer", "active": 1 } ] },
+    "success_check": { "kind": "db_query", "table": "users", "where": { "username": "bob", "active": 0 }, "expect_count": 1 },
+    "success_checks": [
+      { "kind": "db_query", "table": "users", "where": { "username": "dana", "role": "admin", "active": 1 }, "expect_count": 1 }
+    ],
+    "policy": ["stay_in_app"],
+    "max_steps": 20
+  }
+]

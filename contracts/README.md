@@ -20,6 +20,18 @@ Validation helpers (both sides must use them — never hand-roll):
 
 `fixtures/` holds one valid instance of each schema. CI (`make check-contracts`) validates every fixture against its schema on every PR, so a schema change that breaks a fixture fails CI before it breaks a teammate.
 
+## Compound task success
+
+`task.success_check` remains required and unchanged. Tasks may additionally provide
+a non-empty `success_checks` array of objects with the same shape. The primary
+check **and every additional check** must pass against one final state snapshot.
+Omitting the array preserves the original single-check behavior. See
+`fixtures/tasks/admin.compound.tasks.json` for the two-goal example; its existing
+`setup.users` inserts dana after reset, independently of training episodes.
+
+This optional field is an additive shared-contract change and must be reviewed in
+a `contracts: …` PR before integration. No HTTP API change is required for setup.
+
 ## Clause kinds and their `params` (implemented by the sandbox checker, Dev A)
 
 | kind | surface | params | passes when |
