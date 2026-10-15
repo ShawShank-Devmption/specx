@@ -9,6 +9,7 @@ import torch
 import typer
 from jsonschema import Draft202012Validator
 
+from specx.client.paths import repo_root
 from specx.safety.s6.features import RunWindows, windows_from_jsonl
 from specx.safety.s6.models import S6Model, load, sequences_for_model
 
@@ -47,7 +48,10 @@ def score_verdicts(input_path: Path, output_path: Path, model_path: Path) -> Non
         events_path = artifacts.get("events_path")
         if not events_path:
             raise ValueError(f"verdict {verdict.get('run_id')} has no artifacts.events_path")
-        runs = windows_from_jsonl(Path(events_path))
+        events_file = Path(events_path)
+        if not events_file.is_absolute():
+            events_file = repo_root() / events_file
+        runs = windows_from_jsonl(events_file)
         matching = [run for run in runs if run.run_id == verdict.get("run_id")]
         if len(matching) != 1:
             raise ValueError(f"expected one event run for verdict {verdict.get('run_id')}")
