@@ -277,5 +277,12 @@ def test_resume_preserves_shared_estimated_spend_and_episode_count(configured: P
 
 @pytest.mark.sandbox
 def test_real_sandbox_one_episode_with_fake_llm(configured: Path) -> None:
+    # Shared fixtures intentionally provide contracts for only a subset of tools.
+    # The real sandbox correctly rejects tools without a matching contract.
+    covered = {contract["tool_id"] for contract in read_json(contracts_path("shop"))}
+    write_json(
+        tools_path("shop"),
+        [tool for tool in read_json(tools_path("shop")) if tool["tool_id"] in covered],
+    )
     metrics = run(configured, FakeLLM(script()), factory=SandboxClient)
     assert metrics["conditions"]["generated"]["shop"]["success_rate"] == 1

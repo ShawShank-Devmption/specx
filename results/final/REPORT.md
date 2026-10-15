@@ -1,6 +1,6 @@
 # SpecX results
 
-Generated: 2026-10-15T18:54:28.051643+00:00 · Git: 1fb0ea88cca1c434d851782175f189a12e90e78f
+Generated: 2026-10-15T19:37:31.173134+00:00 · Git: c9f3d02039727e77b428146afa01f97f4e8fc30e
 
 Status: INCOMPLETE · Evidence: unknown
 
@@ -12,26 +12,17 @@ Bootstrap CIs: 2,000 paired resamples, local seed 0. Holm correction uses one fa
 
 ## Table 1 - Generation
 
-| status          |
-|:----------------|
-| No observations |
-
-| status                                                                                                              |
-|:--------------------------------------------------------------------------------------------------------------------|
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/shop.tools.json (nonempty generated tool set required)  |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/admin.tools.json (nonempty generated tool set required) |
+| app   | tools_generated   | mean_provenance_surfaces   | tools_ge3_surfaces   |
+|:------|:------------------|:---------------------------|:---------------------|
+| admin | 7                 | 3.4285714285714284         | 5                    |
+| shop  | 7                 | 2.857142857142857          | 3                    |
 
 ## Table 2 - Verification
 
-| status          |
-|:----------------|
-| No observations |
-
-| status                                                                                                              |
-|:--------------------------------------------------------------------------------------------------------------------|
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/shop.tools.json (nonempty generated tool set required)  |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/admin.tools.json (nonempty generated tool set required) |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/verdicts/f1.jsonl (verification evidence)                     |
+| app   | verified   | quarantined   | unverifiable   | generated   | quarantine_reasons                     | replay_determinism_rate   | replay_n   | replay_total   | replay_unmatched   |
+|:------|:-----------|:--------------|:---------------|:------------|:---------------------------------------|:--------------------------|:-----------|:---------------|:-------------------|
+| admin | 5          | 2             | 0              | 0           | {"postcondition": 1, "side_effect": 1} | 1.0                       | 7          | 7              | 0                  |
+| shop  | 6          | 1             | 0              | 0           | {"race": 1}                            | 1.0                       | 7          | 7              | 0                  |
 
 ## Table 3 - S6 anomaly detection
 
@@ -139,6 +130,8 @@ Paired comparisons (B minus A; two-sided tests):
 
 # Implementation decisions
 
+- 2026-10-16 — C integration: validate API v1 from `x-specx-api-version` with legacy body compatibility. Real Chromium/template F3/F1 and scripted C1/C3/C4/C5/C6 checks require no paid provider calls. Keep scripted trials outside benchmark cohorts; publish only measured generation/verification tables while F2/F4 and B metrics remain incomplete. See `docs/FREE_INTEGRATION.md`.
+
 - 2026-10-15 — C2: Holm-adjusted p-values for `[0.01, 0.04, 0.03]` are `[0.03, 0.06, 0.06]` in original order. Undefined paired standardized effects are null; success tests default to two-sided, with an explicit one-sided option for the gate.
 - 2026-10-15 — C3, approved by Developer C: keep required `success_check` unchanged and add optional non-empty `success_checks`; the primary and all additional checks must pass against one final state snapshot. Submit this additive schema change as a `contracts: …` PR for shared review. Legacy task fixtures are unchanged.
 - 2026-10-15 — Admin seed, confirmed by Developer C: exactly six users before task setup: `1 root/root123 admin active=1`, `2 bob/bob123 editor active=1`, `3 carol/carol123 viewer active=1`, `4 erin/erin123 viewer active=1`, `5 hank/hank123 editor active=1`, `6 ivy/ivy123 viewer active=1`. Dana, frank and gina are not seeded. Developer A owns `platform/seed-apps/admin/seed.sql` and implementation of these rows; this checkout does not contain that file or the admin schema yet.
@@ -151,3 +144,22 @@ Paired comparisons (B minus A; two-sided tests):
 - 2026-10-15 — C8 supersedes C7's arm/export limitations: all three arms are implemented, with one baseline per app and independent revision-zero starts. The unchanged shared patch contract is projected into a provider-compatible ops/confidence response schema, then fully validated locally; envelope/provenance fields cannot be supplied by the model. Up to three PNGs precede multimodal text; text-only arms strip images. Missing screenshots are explicit and cannot support claims of vision benefit. Accepted training evidence exports `{bundle_without_screenshot, screenshot_path, accepted_patch, arm}` with content-addressed PNG sidecars and paths relative to the dataset (null when absent). No live numbers are claimed until real experiments run.
 - 2026-10-15 — C9: select the best final training-success arm independently per app from a completed F2 experiment, with ties preferring multimodal, then structured text, then text trace. Explicit arm overrides are recorded as overrides. Evaluation enforces verified revision zero, replays accepted patch histories against published final tools, preserves paired held-out cohorts and frozen model identity, and records evidence hashes for safe resume. No-accepted-patch cases explicitly report `optimised == verified` in run/metrics metadata; C10 must propagate that note into the report. Live 100-episode evaluation remains pending prerequisites and is not replaced by offline fixtures.
 - 2026-10-16 — C10: reports validate shared boundary records first, return exit 2 while still publishing explicit missing-data tables for incomplete cohorts, and exclude training/gate trials from readiness. Holm families are per metric across apps/adjacent condition comparisons; actual paired n and observed/planned family sizes are retained. C9's no-accepted-patch notes propagate to report/dashboard. Safety raw JSON is preserved; S1's undocumented detailed nesting is rendered as supplied metric paths with count context, not an invented schema. The README currently shows MISSING/n=0, not benchmark claims. The dashboard is built/tested and served locally, but browser visual QA was unavailable; live experiment outputs and final coordinated commit/tag remain pending.
+## Platform decisions (Developer A)
+
+- 2026-10-15 · A · `node:sqlite` (built into Node ≥ 22.13) instead of `better-sqlite3` — no native build on Node 26, one fewer dependency.
+- 2026-10-15 · A · Regex route parser instead of tree-sitter — seed-app routes are regular; tree-sitter has no prebuilt binaries for Node 26. Provenance records `parser: regex`.
+- 2026-10-15 · A · Express 5 instead of 4 — matches `@types/express` 5; routes only use `:param` segments.
+- 2026-10-15 · A · Seed apps are multi-tenant: one in-memory SQLite DB per sandbox session (`specx_tenant` cookie / `x-specx-tenant` header). Needed for ≥ 8 parallel sessions without cross-talk.
+- 2026-10-15 · A · Sandbox observes through Playwright request/response events and aborts third-party hosts with `context.route`, rather than raw CDP `Fetch` — same data, less code. DOM mutations and storage writes come from an init script.
+- 2026-10-15 · A · Business invariants (`inv_stock_nonnegative`, `inv_active_admin`) are declared in each app manifest instead of being inferred from column names. Clause kind `db_no_row` added.
+- 2026-10-15 · A · Concurrent invokes evaluate preconditions + invariants only, one page per call. `inv_at_most_once` is attached to `payment` tools only.
+- 2026-10-15 · A · Admin deactivation is its own route (`POST /api/users/:id/deactivate`) so one route maps to one atomic tool.
+- 2026-10-15 · A · New `specx quarantine` step after `make s1`: folds high-severity, non-precondition violations from S1 sources plus S6 anomaly flags on a majority of a tool's own F1 runs. `s6_inject` is refused (its leaks are injected by the harness, not caused by tools).
+- 2026-10-15 · A · Generator names tools with a deterministic template namer (accessible name of the triggering button, else verb + resource). `--namer llm` uses Claude Opus 5.5 when `ANTHROPIC_API_KEY` is set.
+- 2026-10-15 · A · Dropped `exactOptionalPropertyTypes` from the platform tsconfig — friction with Playwright and zod types without a safety gain for this codebase.
+- 2026-10-15 · A · `make demo` order is generate → verify → s6 → s1 → quarantine → graph → s2 …: value-flow and order edges come from S1 and agent traces (F1 resets between tools), so the graph is built after S1. S6 scoring of F1 verdicts moved from `make verify` to `make s6`.
+- 2026-10-15 · A · Verification rule: a tool is verified only if every single run on valid example arguments passes and its replay is identical; any non-precondition violation of any severity quarantines it (the missing role audit is medium severity). Concurrent runs count only for violations, not handler errors (a second idempotent delete returning 404 is fine).
+- 2026-10-15 · A · Value-flow data edges match only id-like fields within one reset epoch **and** only when the field is semantically compatible with the parameter (same name, or a bare `id` from a tool whose resource matches `<x>_id`). Seed ids are small integers shared across id spaces, so value equality alone links unrelated tools.
+- 2026-10-15 · A · A8 (third seed app `blog`) skipped for day 1; two apps cover all four defect classes.
+- 2026-10-15 · A · Crawler reads API responses inside a `page.route` before handing them back, so bodies survive the reload/navigation the UI does after a create or delete; fill values are unique per field to avoid UNIQUE collisions.
+- 2026-10-15 · A · Raw-DOM actions are recorded as their own runs (`<session>_a<n>`) so the raw_dom condition's network effects (policy violations, unapproved calls) are observable.

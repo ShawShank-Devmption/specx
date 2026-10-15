@@ -14,6 +14,7 @@ SpecX turns a developer-authorised website into atomic WebMCP tools, verifies ea
 | Dev B (safety ML: S6 → S1 → S2) | [`docs/DEV_B_SAFETY_ML.md`](docs/DEV_B_SAFETY_ML.md) |
 | Dev C (optimisation & evaluation: client, stats, agent, F2/S4, F4, dashboard) | [`docs/DEV_C_OPTIMISATION_EVAL.md`](docs/DEV_C_OPTIMISATION_EVAL.md) |
 | Integrating anything | [`contracts/README.md`](contracts/README.md) and [`contracts/sandbox_api.md`](contracts/sandbox_api.md) |
+| Running without paid API calls | [`docs/FREE_INTEGRATION.md`](docs/FREE_INTEGRATION.md) — measured integration checks and remaining work |
 
 Background: `docs/reference/` (research draft PDF, work split PDF, full research context).
 
@@ -53,7 +54,7 @@ What the platform stages produce today (template namer, 3 runs per tool):
 
 ## Results
 
-The C10 reporter and dashboard are implemented. Live experiment outputs are not yet available; `make report` currently generates an **incomplete** report and exits **2**. `MISSING` is unknown, not a measured zero.
+The C10 reporter and dashboard are implemented. Real-browser template generation and F1 verification now populate Tables 1–2: Shop has 6 verified / 1 quarantined tool, Admin has 5 verified / 2 quarantined, and replay checks pass 7/7 per app. Model-driven benchmark outputs and B's full safety-stage metrics are not yet available; `make report` generates an **incomplete** report and exits **2**. `MISSING` is unknown, not a measured zero. See the [no-paid-API checkpoint](docs/FREE_INTEGRATION.md) for scope and reproducible commands.
 
 Table 7 — four-condition held-out readiness (current generated report; no live observations):
 

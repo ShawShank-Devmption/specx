@@ -37,6 +37,13 @@ sandbox: ## start the sandbox HTTP server on :4000 (expects apps running)
 generate: ## F3: results/tools/<app>.tools.json + results/contracts/<app>.contracts.json
 	cd platform && npm run cli -- generate --app shop && npm run cli -- generate --app admin
 
+generate-free: ## F3 without model calls: deterministic template names (apps must be running)
+	cd platform && ANTHROPIC_API_KEY= npm run cli -- generate --app shop --namer template && ANTHROPIC_API_KEY= npm run cli -- generate --app admin --namer template
+
+test-free-integration: ## real browser + Python integration tests, no paid API calls (apps/sandbox/tools required)
+	cd platform && ANTHROPIC_API_KEY= npm run test:integration
+	cd python && ANTHROPIC_API_KEY= uv run pytest -q -m "sandbox and not llm"
+
 verify: ## F1: results/verdicts/f1.jsonl, tools get status verified|quarantined (make s6 later fills verdict.anomaly)
 	cd platform && npm run cli -- verify --app shop && npm run cli -- verify --app admin
 
