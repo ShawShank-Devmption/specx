@@ -7,12 +7,17 @@
  */
 import { parseArgs } from "node:util";
 import { generateCommand } from "./generate.js";
+import { quarantineCommand, verifyCommand } from "./verify.js";
 
 const USAGE = `usage: specx <command> --app <app> [options]
 
 commands:
   generate    F3: crawl + code evidence -> results/tools/<app>.tools.json, results/contracts/<app>.contracts.json
               --namer template|llm   (default template; llm needs ANTHROPIC_API_KEY)
+  verify      F1: run every tool in the sandbox -> results/verdicts/f1.jsonl, tool status verified|quarantined
+              --runs N (default 3)  --observe MS post-observe window (default 1000)
+  quarantine  fold later evidence into tool status
+              --from s1,s1_random,s1_coverage,s6_inject (default)
 `;
 
 export async function main(argv: string[]): Promise<number> {
@@ -22,6 +27,9 @@ export async function main(argv: string[]): Promise<number> {
     options: {
       app: { type: "string" },
       namer: { type: "string", default: "template" },
+      runs: { type: "string", default: "3" },
+      observe: { type: "string", default: "1000" },
+      from: { type: "string", default: "s1,s1_random,s1_coverage,s6_inject" },
       help: { type: "boolean", short: "h", default: false },
     },
     strict: true,
@@ -34,6 +42,12 @@ export async function main(argv: string[]): Promise<number> {
   switch (command) {
     case "generate":
       await generateCommand(values.app, values.namer ?? "template");
+      return 0;
+    case "verify":
+      await verifyCommand(values.app, Number(values.runs), Number(values.observe));
+      return 0;
+    case "quarantine":
+      quarantineCommand(values.app, (values.from ?? "").split(",").filter(Boolean));
       return 0;
     default:
       console.error(`unknown command "${command}"\n${USAGE}`);

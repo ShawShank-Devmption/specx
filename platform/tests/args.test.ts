@@ -61,4 +61,16 @@ describe("exampleArgs", () => {
     const withCart = db({ ...Object.fromEntries(Object.entries(state).map(([k, v]) => [k, v.rows])), cart_items: [{ id: 1, user_id: 2, product_id: 4 }, { id: 2, user_id: 1, product_id: 3 }] });
     expect(exampleArgs(removeTool, removeContract, withCart, { id: 1 }).args).toEqual({ product_id: 3 });
   });
+
+  it("reports state-only preconditions (no $args) that no row satisfies", () => {
+    const orderContract: ToolContract = {
+      tool_id: "shop.place_order",
+      preconditions: [{ clause_id: "pre_exists_cart_items", surface: "db", kind: "db_row_exists", params: { table: "cart_items", where: { user_id: "$user.id" } }, description: "", severity: "high" }],
+      postconditions: [],
+      invariants: [],
+    };
+    expect(exampleArgs(tool("shop.place_order"), orderContract, state, { id: 1 })).toEqual({ args: { confirm: true }, unsatisfied: ["pre_exists_cart_items"] });
+    const withCart = db({ ...Object.fromEntries(Object.entries(state).map(([k, v]) => [k, v.rows])), cart_items: [{ id: 1, user_id: 1, product_id: 3 }] });
+    expect(exampleArgs(tool("shop.place_order"), orderContract, withCart, { id: 1 }).unsatisfied).toEqual([]);
+  });
 });

@@ -57,7 +57,6 @@ export function exampleArgs(
     if (clause.kind !== "db_row_exists") continue;
     const where = (clause.params.where ?? {}) as Record<string, unknown>;
     const argCols = Object.entries(where).filter(([, v]) => argRef(v) !== null);
-    if (argCols.length === 0) continue;
     const fixed = Object.fromEntries(Object.entries(where).filter(([, v]) => {
       const a = argRef(v);
       return a === null || a in args;
