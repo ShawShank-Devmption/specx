@@ -50,6 +50,9 @@ s6: ## train + evaluate anomaly layer → results/s6/metrics.json
 s1: ## PPO vs random vs coverage fuzzers → results/s1/metrics.json + results/verdicts/s1*.jsonl
 	$(PY) python -m specx.safety.s1.run --apps shop,admin --steps 1500 --seeds 3 --out results/s1
 
+quarantine: ## fold S1/S6 violations into tool status (run after s1)
+	cd platform && npm run cli -- quarantine --app shop && npm run cli -- quarantine --app admin
+
 s2: ## GNN vs rule-based vs MLP → results/s2/metrics.json + gnn edges merged into graphs
 	$(PY) python -m specx.safety.s2.run --graphs results/graphs --verdicts results/verdicts --out results/s2
 
@@ -65,7 +68,7 @@ evaluate: ## F4 verified + optimised conditions → results/trials/verified.json
 report: ## stats + results/final/REPORT.md + results/final/numbers.json (dashboard reads this)
 	$(PY) python -m specx.stats.report --results results --out results/final
 
-demo: generate verify graph s6 s1 s2 baseline optimise evaluate report ## full pipeline (apps + sandbox must be running)
+demo: generate verify graph s6 s1 quarantine s2 baseline optimise evaluate report ## full pipeline (apps + sandbox must be running)
 
 dashboard: ## serve the React dashboard on :5173
 	cd dashboard && npm run dev

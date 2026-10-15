@@ -3,18 +3,80 @@
   "port": 5101,
   "base_url": "http://127.0.0.1:5101",
   "start_cmd": "node seed-apps/shop/server.js",
-  "approved_hosts": ["127.0.0.1:5101", "localhost:5101"],
-  "approved_endpoints": [
-    { "method": "GET", "path": "/api/products", "risk_level": "read" },
-    { "method": "GET", "path": "/api/products/:id", "risk_level": "read" },
-    { "method": "GET", "path": "/api/cart", "risk_level": "read" },
-    { "method": "POST", "path": "/api/cart", "risk_level": "write" },
-    { "method": "DELETE", "path": "/api/cart/:product_id", "risk_level": "delete" },
-    { "method": "POST", "path": "/api/orders", "risk_level": "payment" },
-    { "method": "GET", "path": "/api/orders", "risk_level": "read" },
-    { "method": "POST", "path": "/api/login", "risk_level": "write" }
+  "approved_hosts": [
+    "127.0.0.1:5101",
+    "localhost:5101"
   ],
-  "auth": { "login_path": "/login", "username": "alice", "password": "alice123" },
-  "tables": ["products", "cart_items", "orders", "order_items", "users", "audit_log"],
-  "audit_table": "audit_log"
+  "approved_endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/products",
+      "risk_level": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/products/:id",
+      "risk_level": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cart",
+      "risk_level": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/cart",
+      "risk_level": "write"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/cart/:product_id",
+      "risk_level": "delete"
+    },
+    {
+      "method": "POST",
+      "path": "/api/orders",
+      "risk_level": "payment"
+    },
+    {
+      "method": "GET",
+      "path": "/api/orders",
+      "risk_level": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/login",
+      "risk_level": "write"
+    }
+  ],
+  "auth": {
+    "login_path": "/login",
+    "username": "alice",
+    "password": "alice123"
+  },
+  "tables": [
+    "products",
+    "cart_items",
+    "orders",
+    "order_items",
+    "users",
+    "audit_log"
+  ],
+  "audit_table": "audit_log",
+  "home_path": "/products",
+  "invariants": [
+    {
+      "id": "inv_stock_nonnegative",
+      "kind": "db_no_row",
+      "table": "products",
+      "where": {
+        "stock": {
+          "op": "<",
+          "value": 0
+        }
+      },
+      "severity": "high",
+      "description": "Product stock never goes negative"
+    }
+  ]
 }

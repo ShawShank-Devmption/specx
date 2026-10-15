@@ -170,33 +170,46 @@ Environment (`.env`, read by both sides): `ANTHROPIC_API_KEY`, `SPECX_AGENT_MODE
 
 ## 7. Seed applications (Dev A builds; everyone depends on these exact names)
 
-Both are Express 4 + `better-sqlite3`, server-rendered HTML + a little vanilla JS, cookie session auth, and the **test hooks** in `contracts/sandbox_api.md` (`/__test/reset|db|audit|leak|apply`). Every state-changing endpoint writes an `audit_log` row (`event, actor, entity, entity_id, ts`). Every interactive element has a `data-testid` **and** a proper ARIA role/name (tools cite both as provenance).
+Both are Express 5 + Node's built-in `node:sqlite`, server-rendered HTML + a little vanilla JS (`public/app.js`), cookie session auth, and the **test hooks** in `contracts/sandbox_api.md` (`/__test/reset|db|audit|leak|apply`). Every sandbox session is its own **tenant** with an independent in-memory database rebuilt from `schema.sql` + `seed.sql` on reset, so parallel sessions never interfere. Every state-changing endpoint is expected to write an `audit_log` row (`event, actor, entity, entity_id, ts`). Every interactive element has a `data-testid` **and** an accessible name (`aria-label`), which tools cite as provenance. Business invariants the developer declares live in the app manifest (`app.json` → `invariants`).
 
 ### `shop` (:5101) — e-commerce
 Tables: `products(id,name,price_cents,stock)`, `users(id,username,password,address)`, `cart_items(id,user_id,product_id,qty)`, `orders(id,user_id,total_cents,status,created_at)`, `order_items(id,order_id,product_id,qty,price_cents)`, `audit_log`.
-Seed: products 1 Blue Mug 1299 · 2 Red Notebook 499 · 3 Green Pen 199 · 4 Black Lamp 2599 · 5 White Chair 7999; user `alice/alice123` (id 1) with a saved address.
-Pages: `/login`, `/products`, `/products/:id`, `/cart`, `/orders`.
-API: `GET /api/products`, `GET /api/products/:id` (returns `id` — **deliberately not `product_id`**, so name-matching dependency rules miss it and value-flow tracing / S2 must recover it), `GET /api/cart`, `POST /api/cart {product_id,qty}`, `DELETE /api/cart/:product_id`, `POST /api/orders {confirm}`, `GET /api/orders`, `POST /api/login`.
+Seed products: 1 Blue Mug 1299 (stock 25) · 2 Red Notebook 499 (40) · 3 Green Pen 199 (100) · 4 Black Lamp 2599 (4) · 5 White Chair 7999 (2). User `alice/alice123` (id 1) with a saved address. Cart and orders start empty.
+Pages: `/login`, `/products`, `/products/:id` (qty input + "Add to cart"), `/cart` ("Remove from cart" per line, "Place order"), `/orders`.
+API (all in the manifest): `GET /api/products`, `GET /api/products/:id` (returns `id` — **deliberately not `product_id`**, so name-matching dependency rules miss it and value-flow tracing / S2 must recover it), `GET /api/cart`, `POST /api/cart {product_id,qty}` (inserts a cart line and **reserves** stock), `DELETE /api/cart/:product_id` (removes the lines and releases stock), `POST /api/orders {confirm:true}`, `GET /api/orders`, `POST /api/login`.
+Manifest invariant: `inv_stock_nonnegative` (no product with `stock < 0`).
 **Intentional defects (S1 must find them; do not fix them):**
-- **Race:** `POST /api/orders` reads the cart, inserts the order, then deletes the cart with no transaction — two concurrent calls create **two orders**. Contract invariant `inv_at_most_once(orders)` catches it only under `invoke_concurrent`.
-- **Boundary:** `POST /api/cart` with `qty > stock` succeeds and drives stock negative (no check). Postcondition `db_delta(products.updated=1)` with `stock >= 0` row check fails.
-- **Unapproved endpoint:** `POST /api/analytics` exists, is not in the manifest, and fires only in leak mode.
-Expected generated tools (7): `list_products, get_product, view_cart, add_to_cart, remove_from_cart, place_order, list_orders`.
+- **Race:** `POST /api/orders` reads the cart, awaits a simulated payment authorisation, inserts the order, then clears the cart, with no transaction or idempotency guard — two concurrent calls create **two orders**. Caught by `inv_at_most_once(orders)` only under `invoke_concurrent`.
+- **Boundary:** `POST /api/cart` never checks `qty` against stock — `qty` above the remaining stock drives stock negative (Black Lamp and White Chair are easy targets). Caught by `inv_stock_nonnegative`.
+- **Unapproved endpoint:** `POST /api/analytics` exists in the code, is not in the manifest, and is called only in leak mode.
+
+Generated tools (7): `list_products, get_product, view_cart, add_to_cart, remove_from_cart, place_order, list_orders`.
 
 ### `admin` (:5102) — CRUD/admin
 Tables: `users(id,username,email,role in {viewer,editor,admin},active)`, `notes(id,user_id,body)`, `audit_log`.
-Seed: 6 users incl. `root/root123` (id 1, role admin), 10 notes.
-Pages: `/login`, `/users`, `/users/:id`, `/users/new`.
-API: `GET /api/users`, `GET /api/users/:id`, `POST /api/users`, `PATCH /api/users/:id {username?,email?,active?}`, `POST /api/users/:id/role {role}`, `DELETE /api/users/:id`, `POST /api/login`.
+Seed users (exactly these; `dana`, `frank`, `gina` are **not** seeded — tasks create them, and a task that needs one of them pre-existing must create it in `setup`):
+
+| id | username | password | role | active |
+|---|---|---|---|---|
+| 1 | root | root123 | admin | 1 |
+| 2 | bob | bob123 | editor | 1 |
+| 3 | carol | carol123 | viewer | 1 |
+| 4 | erin | erin123 | viewer | 1 |
+| 5 | hank | hank123 | editor | 1 |
+| 6 | ivy | ivy123 | viewer | 1 |
+
+Seed notes: 10 rows, at least one per user 2–6. The sandbox logs in as `root`.
+Pages: `/login`, `/users`, `/users/new` ("Create user"), `/users/:id` ("Update user" form, role select + "Set role", "Deactivate user", "Delete user").
+API: `GET /api/users`, `GET /api/users/:id`, `POST /api/users {username,email,role}`, `PATCH /api/users/:id {username,email}`, `POST /api/users/:id/role {role}`, `POST /api/users/:id/deactivate`, `DELETE /api/users/:id`, `POST /api/login`. `/__test/apply` accepts `{users:[{username,email,role,active}]}` and inserts them.
+Manifest invariant: `inv_active_admin` (at least one row with `role='admin' AND active=1`).
 **Intentional defects:**
-- **Hidden side effect:** `DELETE /api/users/:id` silently deletes the user's `notes` rows; the contract for `delete_user` expects `db_delta(notes.deleted=0)`.
-- **State-dependent invariant:** `PATCH /api/users/1 {active:false}` deactivates the only admin; invariant `db_row_exists(users, {role:"admin", active:1})` fails. Only reachable through a specific sequence — this is what S2's path-risk head should learn.
-- **Missing audit:** `POST /api/users/:id/role` does **not** write an audit row (contract `audit_event("user.role")` fails).
-Expected generated tools (7): `list_users, get_user, create_user, update_user, set_role, deactivate_user, delete_user`.
+- **Hidden side effect:** a legacy SQLite trigger in `schema.sql` deletes the user's `notes` when a user is deleted; the route code never mentions notes, so the derived frame condition `post_frame_notes` fails at runtime.
+- **State-dependent invariant:** deactivating, demoting or deleting `root` leaves no active admin (`inv_active_admin` fails). Default example arguments target the last row (`ivy`), so F1 does not hit it; S1 must reach `root` through seeded argument exploration, and S2's path-risk head should learn which prefixes lead there.
+- **Missing audit:** `POST /api/users/:id/role` writes no audit row, so the derived `audit_event{entity:"users"}` postcondition fails.
 
-**Leak mode** (`POST /__test/leak {kind, delay_ms}`): arms a one-shot leak that fires after the next state-changing call, in the page's `phase:"post"` window: `delayed_post` (POST /api/analytics), `storage_write` (`localStorage.__trk`), `third_party_fetch` (`https://tracker.example.invalid`), `background_poll` (`setInterval` GET /api/cart or /api/users every `delay_ms`).
+Generated tools (7): `list_users, get_user, create_user, update_user, set_role, deactivate_user, delete_user`.
 
----
+**Leak mode** (`POST /__test/leak {kind, delay_ms}`): arms a one-shot leak that fires after the next state-changing call, in the page's `phase:"post"` window: `delayed_post` (POST /api/analytics), `storage_write` (`localStorage.__trk`), `third_party_fetch` (`https://tracker.example.invalid`), `background_poll` (five GETs of `/api/cart` or `/api/users` every `delay_ms`).
 
 ## 8. Pipeline stages and what each must publish
 
@@ -205,6 +218,7 @@ Expected generated tools (7): `list_users, get_user, create_user, update_user, s
 | `generate` | A | seed-app code, live DOM/ARIA, recorded network | `results/tools/<app>.tools.json`, `results/contracts/<app>.contracts.json` | 7 tools per app, each with ≥ 2 provenance surfaces and a contract with ≥ 1 postcondition; all validate |
 | `verify` | A (+B score) | tools, contracts | `results/verdicts/f1.jsonl`; tool `status` set; `anomaly` filled by `specx.safety.s6.score` | every tool run 3× single + 1 replay + (write/delete/payment) 1 concurrent×2; replay deterministic; quarantine reasons machine-readable |
 | `graph` | A | tools, contracts, verdicts | `results/graphs/<app>.graph.json` | order edges from traces, state edges from contracts, data edges from value-flow (evidence `trace`) and name match (evidence `rule`) |
+| `quarantine` | A | tools, every verdict file after `s1` | tool `status` updated in `results/tools/<app>.tools.json` | a verified tool with any high-severity, non-precondition violation from S1/S6 runs becomes `quarantined`; this is what makes the **verified** condition "F1 + S6 + S1" |
 | `s6` | B | events (approved runs + injected leaks) | `results/s6/metrics.json`, `results/s6/model.*` | detection rate per leak kind and FPR on benign, for IF / LSTM-AE / both |
 | `s1` | B | sandbox, tools, example_args | `results/verdicts/s1.jsonl`, `s1_random.jsonl`, `s1_coverage.jsonl`, `results/s1/metrics.json` | unique violation signatures per 1 000 invokes and time-to-first-violation, 3 seeds × 2 apps × 3 methods |
 | `s2` | B | graphs, all verdicts | `results/s2/metrics.json`; `evidence:"gnn"` edges merged into graphs | link-prediction AUC/P/R and path-risk AUC/P/R/F1 for GCN vs rule-based vs MLP on a session-disjoint held-out split |
