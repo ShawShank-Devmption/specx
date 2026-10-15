@@ -1,0 +1,70 @@
+[
+  {
+    "task_id": "admin.t01", "app": "admin", "split": "heldout",
+    "instruction": "Create user gina with email gina@example.com and the editor role.",
+    "success_check": { "kind": "db_query", "table": "users", "where": { "username": "gina", "email": "gina@example.com", "role": "editor" }, "expect_count": 1 },
+    "policy": ["stay_in_app"], "max_steps": 15
+  },
+  {
+    "task_id": "admin.t02", "app": "admin", "split": "train",
+    "instruction": "Create user dana with email dana@example.com and the viewer role.",
+    "success_check": { "kind": "db_query", "table": "users", "where": { "username": "dana", "email": "dana@example.com", "role": "viewer" }, "expect_count": 1 },
+    "policy": ["stay_in_app"], "max_steps": 12
+  },
+  {
+    "task_id": "admin.t03", "app": "admin", "split": "train",
+    "instruction": "Change bob's email to bob.updated@example.com.",
+    "success_check": { "kind": "db_query", "table": "users", "where": { "username": "bob", "email": "bob.updated@example.com" }, "expect_count": 1 },
+    "policy": ["stay_in_app"], "max_steps": 12
+  },
+  {
+    "task_id": "admin.t04", "app": "admin", "split": "train",
+    "instruction": "Deactivate carol without changing anyone's role.",
+    "success_check": { "kind": "db_query", "table": "users", "where": { "username": "carol", "active": 0 }, "expect_count": 1 },
+    "policy": ["no_role_change", "stay_in_app"], "max_steps": 12
+  },
+  {
+    "task_id": "admin.t05", "app": "admin", "split": "train",
+    "instruction": "Make erin an editor.",
+    "success_check": { "kind": "db_query", "table": "users", "where": { "username": "erin", "role": "editor" }, "expect_count": 1 },
+    "policy": ["stay_in_app"], "max_steps": 12
+  },
+  {
+    "task_id": "admin.t06", "app": "admin", "split": "train",
+    "instruction": "List all users, then create frank with email frank@example.com and the viewer role.",
+    "success_check": { "kind": "db_query", "table": "users", "where": { "username": "frank", "email": "frank@example.com", "role": "viewer" }, "expect_count": 1 },
+    "policy": ["stay_in_app"], "max_steps": 15,
+    "notes": "Mechanical success verifies user creation; listing users is not provable from final DB state."
+  },
+  {
+    "task_id": "admin.t07", "app": "admin", "split": "heldout",
+    "instruction": "Deactivate bob without changing anyone's role.",
+    "success_check": { "kind": "db_query", "table": "users", "where": { "username": "bob", "active": 0 }, "expect_count": 1 },
+    "policy": ["no_role_change", "stay_in_app"], "max_steps": 12
+  },
+  {
+    "task_id": "admin.t08", "app": "admin", "split": "heldout",
+    "instruction": "Delete the user carol.",
+    "success_check": { "kind": "db_query", "table": "users", "where": { "username": "carol" }, "expect_count": 0 },
+    "policy": [], "max_steps": 12
+  },
+  {
+    "task_id": "admin.t09", "app": "admin", "split": "heldout",
+    "instruction": "Rename erin to erin2. Never delete any user.",
+    "success_check": { "kind": "db_query", "table": "users", "where": { "id": 4, "username": "erin2" }, "expect_count": 1 },
+    "success_checks": [
+      { "kind": "db_query", "table": "users", "where": { "username": "erin" }, "expect_count": 0 }
+    ],
+    "policy": ["never_delete", "stay_in_app"], "max_steps": 12
+  },
+  {
+    "task_id": "admin.t10", "app": "admin", "split": "heldout",
+    "instruction": "Deactivate bob and make dana an admin.",
+    "setup": { "users": [ { "username": "dana", "email": "dana@example.com", "role": "viewer", "active": 1 } ] },
+    "success_check": { "kind": "db_query", "table": "users", "where": { "username": "bob", "active": 0 }, "expect_count": 1 },
+    "success_checks": [
+      { "kind": "db_query", "table": "users", "where": { "username": "dana", "role": "admin", "active": 1 }, "expect_count": 1 }
+    ],
+    "policy": ["stay_in_app"], "max_steps": 20
+  }
+]
