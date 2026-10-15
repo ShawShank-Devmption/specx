@@ -4,11 +4,13 @@
  *   verify     --app <app> [--runs 3]
  *   graph      --app <app>
  *   quarantine --app <app> [--from s1,s1_random,s1_coverage,s6_inject]
+ *   versions
  */
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { generateCommand } from "./generate.js";
 import { graphCommand } from "./graph.js";
+import { versionsCommand } from "./versions.js";
 import { quarantineCommand, verifyCommand } from "./verify.js";
 
 const USAGE = `usage: specx <command> --app <app> [options]
@@ -19,6 +21,7 @@ commands:
   verify      F1: run every tool in the sandbox -> results/verdicts/f1.jsonl, tool status verified|quarantined
               --runs N (default 3)  --observe MS post-observe window (default 1000)
   graph       typed workflow graph -> results/graphs/<app>.graph.json (keeps S2's gnn edges)
+  versions    record node, playwright and chromium versions -> results/final/platform_versions.json (no --app)
   quarantine  fold later evidence into tool status
               --from s1,s1_random,s1_coverage,s6_inject (default)
 `;
@@ -40,6 +43,10 @@ export async function main(argv: string[]): Promise<number> {
   if (!command || values.help || command === "help") {
     console.log(USAGE);
     return command ? 0 : 1;
+  }
+  if (command === "versions") {
+    await versionsCommand();
+    return 0;
   }
   if (!values.app) throw new Error("--app is required");
   switch (command) {

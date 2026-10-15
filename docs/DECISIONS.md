@@ -13,3 +13,7 @@ One line per decision that deviates from or sharpens the plan. Newest last.
 - 2026-10-15 · A · New `specx quarantine` step folds S1/S6 high-severity violations into tool status after `make s1`, so the verified condition reflects F1 + S6 + S1.
 - 2026-10-15 · A · Generator names tools with a deterministic template namer (accessible name of the triggering button, else verb + resource). `--namer llm` uses Claude Opus 5.5 when `ANTHROPIC_API_KEY` is set.
 - 2026-10-15 · A · Dropped `exactOptionalPropertyTypes` from the platform tsconfig — friction with Playwright and zod types without a safety gain for this codebase.
+- 2026-10-15 · A · `make demo` order is generate → verify → s6 → s1 → quarantine → graph → s2 …: value-flow and order edges come from S1 and agent traces (F1 resets between tools), so the graph is built after S1. S6 scoring of F1 verdicts moved from `make verify` to `make s6`.
+- 2026-10-15 · A · Verification rule: a tool is verified only if every single run on valid example arguments passes and its replay is identical; any non-precondition violation of any severity quarantines it (the missing role audit is medium severity). Concurrent runs count only for violations, not handler errors (a second idempotent delete returning 404 is fine).
+- 2026-10-15 · A · Value-flow data edges match only id-like fields (`id`, `*_id`) within one reset epoch. Seed-app ids are small integers, so a value-length filter would drop every real dependency.
+- 2026-10-15 · A · A8 (third seed app `blog`) skipped for day 1; two apps cover all four defect classes.
