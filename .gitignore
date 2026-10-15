@@ -3,6 +3,7 @@
 .idea/
 .vscode/
 *.swp
+.worktrees/
 
 # Node
 node_modules/
