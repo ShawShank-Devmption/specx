@@ -128,4 +128,18 @@ describe.runIf(integration)("sandbox server (integration)", () => {
     expect((await h.call("POST", `/sessions/${id}/invoke`, { args: {} })).status).toBe(400);
     expect((await h.call("POST", `/sessions/nope/reset`, {})).status).toBe(404);
   });
+
+  it("keeps invoke latency under 400 ms p50 excluding the observe window", async () => {
+    const id = await session();
+    const durations: number[] = [];
+    for (let i = 0; i < 30; i++) durations.push((await h.call<Verdict>("POST", `/sessions/${id}/invoke`, { ...add, post_observe_ms: 0 })).body.duration_ms);
+    durations.sort((a, b) => a - b);
+    expect(durations[15]).toBeLessThan(400);
+  });
+
+  it("runs 8 sessions in parallel without interference", async () => {
+    const ids = await Promise.all(Array.from({ length: 8 }, () => session()));
+    const verdicts = await Promise.all(ids.map((id) => h.call<Verdict>("POST", `/sessions/${id}/invoke`, add)));
+    expect(verdicts.map((v) => [v.body.status, v.body.effect_diff.db.cart_items?.inserted])).toEqual(Array(8).fill(["pass", 1]));
+  });
 });

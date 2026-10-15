@@ -85,13 +85,18 @@ function inferType(values: unknown[]): InputType {
 
 function valueSchema(v: unknown): JsonSchema {
   if (v === null) return { type: "null" };
-  if (Array.isArray(v)) return { type: "array" };
+  if (Array.isArray(v)) {
+    const first = v[0];
+    return first !== null && typeof first === "object" && !Array.isArray(first) ? { type: "array", items: { type: "object", properties: objectProps(first as Record<string, unknown>) } } : { type: "array" };
+  }
   if (typeof v === "object") return { type: "object" };
   if (Number.isInteger(v)) return { type: "integer" };
   return { type: typeof v };
 }
 
-const objectProps = (o: Record<string, unknown>) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, valueSchema(v)]));
+function objectProps(o: Record<string, unknown>): Record<string, JsonSchema> {
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, valueSchema(v)]));
+}
 
 export function outputSchemaOf(response: unknown): JsonSchema | undefined {
   if (Array.isArray(response)) {
@@ -144,7 +149,10 @@ export function buildCandidates(routes: RouteEvidence[], triggers: DomTrigger[],
       inputs.push(field);
     }
 
-    const ok = routeSamples.find((s) => s.status >= 200 && s.status < 300 && s.response !== null && s.response !== undefined);
+    // The most informative 2xx response (e.g. a filled cart rather than an empty one) defines the shape.
+    const ok = routeSamples
+      .filter((s) => s.status >= 200 && s.status < 300 && s.response !== null && s.response !== undefined)
+      .sort((a, b) => JSON.stringify(b.response).length - JSON.stringify(a.response).length)[0];
     const outputSchema = ok ? outputSchemaOf(ok.response) : undefined;
     candidates.push({
       app: manifest.app,

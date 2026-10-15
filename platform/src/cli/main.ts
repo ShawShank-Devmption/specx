@@ -5,8 +5,10 @@
  *   graph      --app <app>
  *   quarantine --app <app> [--from s1,s1_random,s1_coverage,s6_inject]
  */
+import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { generateCommand } from "./generate.js";
+import { graphCommand } from "./graph.js";
 import { quarantineCommand, verifyCommand } from "./verify.js";
 
 const USAGE = `usage: specx <command> --app <app> [options]
@@ -16,6 +18,7 @@ commands:
               --namer template|llm   (default template; llm needs ANTHROPIC_API_KEY)
   verify      F1: run every tool in the sandbox -> results/verdicts/f1.jsonl, tool status verified|quarantined
               --runs N (default 3)  --observe MS post-observe window (default 1000)
+  graph       typed workflow graph -> results/graphs/<app>.graph.json (keeps S2's gnn edges)
   quarantine  fold later evidence into tool status
               --from s1,s1_random,s1_coverage,s6_inject (default)
 `;
@@ -46,6 +49,9 @@ export async function main(argv: string[]): Promise<number> {
     case "verify":
       await verifyCommand(values.app, Number(values.runs), Number(values.observe));
       return 0;
+    case "graph":
+      graphCommand(values.app);
+      return 0;
     case "quarantine":
       quarantineCommand(values.app, (values.from ?? "").split(",").filter(Boolean));
       return 0;
@@ -55,10 +61,12 @@ export async function main(argv: string[]): Promise<number> {
   }
 }
 
-main(process.argv.slice(2)).then(
-  (code) => process.exit(code),
-  (err: unknown) => {
-    console.error(`error: ${(err as Error).message}`);
-    process.exit(1);
-  },
-);
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+  main(process.argv.slice(2)).then(
+    (code) => process.exit(code),
+    (err: unknown) => {
+      console.error(`error: ${(err as Error).message}`);
+      process.exit(1);
+    },
+  );
+}

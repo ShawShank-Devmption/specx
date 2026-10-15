@@ -85,6 +85,15 @@ describe("buildCandidates", () => {
     });
     expect(cand("GET", "/api/cart")?.outputSchema).toBeUndefined();
   });
+
+  it("learns the output shape from the most informative response (a filled cart, not an empty one)", () => {
+    const carts: NetworkSample[] = [
+      { method: "GET", path: "/api/cart", pattern: "/api/cart", status: 200, response: { items: [], total_cents: 0 } },
+      { method: "GET", path: "/api/cart", pattern: "/api/cart", status: 200, response: { items: [{ cart_item_id: 1, product_id: 3, qty: 1 }], total_cents: 199 } },
+    ];
+    const c = buildCandidates(routes, [], carts, manifest).candidates.find((x) => x.route.method === "GET" && x.route.path === "/api/cart");
+    expect((c?.outputSchema?.properties as Record<string, { items?: { properties?: object } }>).items?.items?.properties).toHaveProperty("product_id");
+  });
 });
 
 describe("emitTool + templateNamer", () => {

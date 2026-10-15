@@ -68,7 +68,7 @@ evaluate: ## F4 verified + optimised conditions → results/trials/verified.json
 report: ## stats + results/final/REPORT.md + results/final/numbers.json (dashboard reads this)
 	$(PY) python -m specx.stats.report --results results --out results/final
 
-demo: generate verify graph s6 s1 quarantine s2 baseline optimise evaluate report ## full pipeline (apps + sandbox must be running)
+demo: generate verify s6 s1 quarantine graph s2 baseline optimise evaluate report ## full pipeline (apps + sandbox must be running)
 
 dashboard: ## serve the React dashboard on :5173
 	cd dashboard && npm run dev
