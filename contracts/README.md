@@ -34,21 +34,31 @@ a `contracts: …` PR before integration. No HTTP API change is required for set
 
 ## Clause kinds and their `params` (implemented by the sandbox checker, Dev A)
 
+**Value references** inside `params` (resolved by the sandbox per run): `"$args.<name>"` → the invoke argument; `"$user.id"` → id of the logged-in manifest user (looked up in the `users` table by `auth.username`).
+
+**`where` syntax** (used by `db_row_exists`, `db_no_row`, manifest invariants): `{column: value}` with `value` either a scalar / value reference (equality, compared as strings so `1` equals `"1"`, matching SQLite affinity) or `{"op": "<"|"<="|">"|">="|"!=", "value": number|string}`.
+
+**Counters** in `db_delta` are either an exact integer or `{"min": n, "max": n}` (either bound optional). Omitted counters are not checked.
+
 | kind | surface | params | passes when |
 |---|---|---|---|
 | `dom_exists` | dom | `{selector}` | `page.locator(selector).count() > 0` |
 | `dom_absent` | dom | `{selector}` | count == 0 |
 | `dom_text_contains` | dom | `{selector, text}` | inner text of selector contains `text` (case-insensitive) |
 | `url_matches` | dom | `{pattern}` (regex) | `page.url()` matches |
-| `auth_state` | aria | `{logged_in: bool}` | manifest's logged-in marker selector present/absent (`[data-testid=user-menu]`) |
-| `network_calls` | network | `{method, path, min?, max?}` | number of matching first-party requests during+post phases within `[min,max]` (default exactly 1) |
-| `no_unapproved_endpoint` | network | `{}` | zero first-party requests with `approved=false` |
-| `no_third_party` | network | `{}` | zero `third_party=true` requests |
-| `db_delta` | db | `{table, inserted?, updated?, deleted?}` | each given counter equals the observed delta exactly |
-| `db_row_exists` | db | `{table, where}` | ≥1 row matching equality filter after the run |
-| `audit_event` | audit | `{event, count?}` | audit rows with `event` since run start == count (default 1) |
+| `auth_state` | aria | `{logged_in: bool}` | `[data-testid=user-menu]` present (logged in) / absent |
+| `network_calls` | network | `{method, path, min?, max?}` | first-party requests of this run (during + post) matching `method` and the `path` pattern number within `[min,max]` (default exactly 1) |
+| `no_unapproved_endpoint` | network | `{}` | zero first-party fetch/xhr requests with `approved=false` |
+| `no_third_party` | network | `{}` | zero `third_party=true` requests (they are blocked and recorded) |
+| `db_delta` | db | `{table, inserted?, updated?, deleted?}` | each given counter matches the observed row delta (rows compared by `id`) |
+| `db_row_exists` | db | `{table, where}` | ≥ 1 row matches — on `dbBefore` for preconditions, `dbAfter` otherwise |
+| `db_no_row` | db | `{table, where}` | no row matches (on `dbAfter`) |
+| `audit_event` | audit | `{event?, entity?, count?}` | new audit rows matching `event` and/or `entity` == `count` (default 1) |
 | `storage_untouched` | dom | `{}` | zero `storage` events with `op in {set, remove, clear}` |
-| `at_most_once` | db | `{table}` | across a `concurrency_group`, total `inserted` on `table` ≤ 1 (race-condition detector) |
+| `at_most_once` | db | `{table}` | inserted rows on `table` ≤ 1 — over the whole `concurrency_group` in concurrent mode (race detector) |
 | `output_matches` | code | `{schema}` | handler output validates against the JSON Schema |
 
-Default **invariants** attached to every contract by F1: `inv_no_unapproved_endpoint` (high), `inv_no_third_party` (high), `inv_storage_untouched` (medium). Tools with `risk_level ∈ {write, delete, payment}` also get `inv_audit_event` for their entity.
+**Derivation rules used by F1** (`platform/src/contracts/derive.ts`):
+- Preconditions: `auth_state{logged_in:true}`; `db_row_exists` for every row an `UPDATE`/`DELETE`/`SELECT … WHERE` in the route targets and for every `<x>_id` foreign key an `INSERT` writes.
+- Postconditions: `network_calls` (exactly one call to the route); `db_delta` per written table (`INSERT … VALUES` → inserted 1, `INSERT … SELECT` → inserted ≥ 1, `UPDATE … WHERE id` → updated ≤ 1, `DELETE … WHERE id` → deleted 1, other `DELETE` → deleted ≥ 1); a **frame condition** `post_frame_<table>` = all-zero `db_delta` for every other manifest table except `audit_log`; `audit_event` for every write/delete/payment tool (by event name when the code names it, else by entity); `output_matches` when an output schema is known.
+- Invariants: `inv_no_unapproved_endpoint` (high), `inv_no_third_party` (high), `inv_storage_untouched` (medium); every manifest invariant whose table the tool writes; `inv_at_most_once` on the inserted table for `payment` tools.

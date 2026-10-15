@@ -20,18 +20,36 @@ Background: `docs/reference/` (research draft PDF, work split PDF, full research
 ## Run it
 
 ```bash
-cp .env.example .env            # add ANTHROPIC_API_KEY
+cp .env.example .env            # add ANTHROPIC_API_KEY (needed by the Python stages and --namer llm)
 make setup                      # node deps + playwright chromium + python venv (uv)
 make test                       # contracts + unit tests, offline
+cd platform && npm run test:integration   # sandbox + generator against real Chromium (~2 min)
+```
 
-# three terminals (or scripts/run_all.sh)
+One command (starts apps + sandbox, runs the target, stops everything):
+
+```bash
+scripts/run_all.sh platform-demo   # Dev A stages: generate -> verify -> graph
+scripts/run_all.sh                 # full pipeline: make demo
+```
+
+Or by hand, in three terminals:
+
+```bash
 make apps                       # shop :5101, admin :5102
-make sandbox                    # :4000
-make demo                       # generate → verify → graph → s6 → s1 → s2 → baseline → optimise → evaluate → report
+make sandbox                    # sandbox HTTP API :4000 (contracts/sandbox_api.md)
+make demo                       # generate → verify → s6 → s1 → quarantine → graph → s2 → baseline → optimise → evaluate → report
 make dashboard                  # :5173, renders results/final/numbers.json
 ```
 
-Individual stages: `make generate verify graph s6 s1 s2 baseline optimise evaluate report` (see `make help`).
+Individual stages: `make help`. Platform CLI: `cd platform && npm run cli -- help`.
+
+What the platform stages produce today (template namer, 3 runs per tool):
+
+| App | Tools | Verified | Quarantined (reason) | Replay deterministic |
+|---|---|---|---|---|
+| shop | 7 | 6 | `place_order` (checkout race under concurrent calls) | 7/7 |
+| admin | 7 | 5 | `set_role` (no audit row), `delete_user` (hidden cascade deletes notes) | 7/7 |
 
 ## Results
 
