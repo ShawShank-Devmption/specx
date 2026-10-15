@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specx.dev/contracts/task.schema.json",
+  "title": "EvalTask",
+  "description": "One benchmark task for the evaluation agent (F4). Owned by Dev C. Success is checked mechanically against the seed app's /__test/db endpoint or the final page, never by an LLM judge.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "app", "instruction", "split", "success_check", "policy", "max_steps"],
+  "properties": {
+    "task_id": { "type": "string", "pattern": "^[a-z0-9_]+\\.t[0-9]{2}$" },
+    "app": { "type": "string" },
+    "instruction": { "type": "string", "description": "Natural-language task given to the agent, e.g. 'Add two units of the Blue Mug to the cart and check out with the saved address.'" },
+    "split": { "type": "string", "enum": ["train", "heldout"], "description": "train tasks drive F2 revisions; heldout tasks are used for F4 reporting and never shown to the reviser." },
+    "setup": { "type": "object", "description": "Optional state to apply after reset via /__test/apply, e.g. {\"cart\": [{\"product_id\": 3, \"qty\": 1}]}." },
+    "success_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["db_query", "db_count", "url_contains", "dom_text"] },
+        "table": { "type": "string" },
+        "where": { "type": "object", "description": "Equality filter, e.g. {\"status\": \"placed\", \"user_id\": 1}." },
+        "expect_count": { "type": "integer" },
+        "expect_min": { "type": "integer" },
+        "value": { "type": "string" }
+      }
+    },
+    "policy": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["never_delete", "no_checkout_without_confirm", "no_role_change", "stay_in_app", "read_only"] },
+      "description": "Policies the agent must respect; violations are recorded in TrialResult.policy_violations by the harness (mechanically, from tool risk_level and the verdict effect_diff)."
+    },
+    "max_steps": { "type": "integer", "minimum": 1, "maximum": 40 },
+    "notes": { "type": "string" }
+  }
+}

@@ -1,0 +1,59 @@
+[
+  {
+    "tool_id": "shop.list_products",
+    "app": "shop",
+    "name": "list_products",
+    "description": "List all products in the catalogue with id, name, price and stock.",
+    "input_schema": { "type": "object", "properties": {}, "required": [], "additionalProperties": false },
+    "output_schema": { "type": "object", "properties": { "products": { "type": "array", "items": { "type": "object", "properties": { "product_id": { "type": "integer" }, "name": { "type": "string" }, "price_cents": { "type": "integer" }, "stock": { "type": "integer" } } } } } },
+    "handler": { "kind": "api", "code": "async (input) => { const r = await fetch('/api/products'); return { products: await r.json() }; }", "http": { "method": "GET", "path_template": "/api/products" } },
+    "risk_level": "read",
+    "atomic": true,
+    "provenance": [
+      { "surface": "code", "ref": "seed-apps/shop/server.js:41", "snippet": "app.get('/api/products', ...)" },
+      { "surface": "network", "ref": "GET /api/products" }
+    ],
+    "version": 1,
+    "metadata_revision": 0,
+    "status": "verified"
+  },
+  {
+    "tool_id": "shop.add_to_cart",
+    "app": "shop",
+    "name": "add_to_cart",
+    "description": "Add a quantity of one product to the current user's cart. Does not check out.",
+    "input_schema": { "type": "object", "properties": { "product_id": { "type": "integer", "description": "Product id from list_products" }, "qty": { "type": "integer", "minimum": 1, "maximum": 10, "description": "Units to add" } }, "required": ["product_id", "qty"], "additionalProperties": false },
+    "output_schema": { "type": "object", "properties": { "cart_item_id": { "type": "integer" }, "cart_total_cents": { "type": "integer" } } },
+    "handler": { "kind": "api", "code": "async (input) => { const r = await fetch('/api/cart', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({product_id: input.product_id, qty: input.qty})}); if (!r.ok) throw new Error('add_to_cart failed ' + r.status); return await r.json(); }", "http": { "method": "POST", "path_template": "/api/cart" } },
+    "risk_level": "write",
+    "atomic": true,
+    "provenance": [
+      { "surface": "code", "ref": "seed-apps/shop/server.js:58", "snippet": "app.post('/api/cart', ...)" },
+      { "surface": "dom", "ref": "button[data-testid=add-to-cart]" },
+      { "surface": "aria", "ref": "button 'Add to cart'" },
+      { "surface": "network", "ref": "POST /api/cart" }
+    ],
+    "version": 1,
+    "metadata_revision": 0,
+    "status": "verified"
+  },
+  {
+    "tool_id": "shop.place_order",
+    "app": "shop",
+    "name": "place_order",
+    "description": "Place an order for everything currently in the cart using the saved address. This is a payment action.",
+    "input_schema": { "type": "object", "properties": { "confirm": { "type": "boolean", "const": true, "description": "Must be true; the agent must have user confirmation." } }, "required": ["confirm"], "additionalProperties": false },
+    "output_schema": { "type": "object", "properties": { "order_id": { "type": "integer" }, "total_cents": { "type": "integer" } } },
+    "handler": { "kind": "api", "code": "async (input) => { const r = await fetch('/api/orders', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({confirm: input.confirm})}); if (!r.ok) throw new Error('place_order failed ' + r.status); return await r.json(); }", "http": { "method": "POST", "path_template": "/api/orders" } },
+    "risk_level": "payment",
+    "atomic": true,
+    "provenance": [
+      { "surface": "code", "ref": "seed-apps/shop/server.js:77", "snippet": "app.post('/api/orders', ...)" },
+      { "surface": "dom", "ref": "button[data-testid=checkout]" },
+      { "surface": "network", "ref": "POST /api/orders" }
+    ],
+    "version": 1,
+    "metadata_revision": 0,
+    "status": "generated"
+  }
+]

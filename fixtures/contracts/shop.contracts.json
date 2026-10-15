@@ -1,0 +1,40 @@
+[
+  {
+    "tool_id": "shop.add_to_cart",
+    "preconditions": [
+      { "clause_id": "pre_logged_in", "surface": "aria", "kind": "auth_state", "params": { "logged_in": true }, "description": "User must be logged in", "severity": "high" },
+      { "clause_id": "pre_product_exists", "surface": "db", "kind": "db_row_exists", "params": { "table": "products", "where": { "id": "$args.product_id" } }, "description": "Product must exist", "severity": "medium" }
+    ],
+    "postconditions": [
+      { "clause_id": "post_cart_row", "surface": "db", "kind": "db_delta", "params": { "table": "cart_items", "inserted": 1, "deleted": 0 }, "description": "Exactly one cart row inserted", "severity": "high" },
+      { "clause_id": "post_one_post", "surface": "network", "kind": "network_calls", "params": { "method": "POST", "path": "/api/cart", "min": 1, "max": 1 }, "description": "Exactly one POST /api/cart", "severity": "high" },
+      { "clause_id": "post_audit", "surface": "audit", "kind": "audit_event", "params": { "event": "cart.add", "count": 1 }, "description": "One cart.add audit event", "severity": "medium" },
+      { "clause_id": "post_output", "surface": "code", "kind": "output_matches", "params": { "schema": { "type": "object", "required": ["cart_item_id"] } }, "description": "Returns cart_item_id", "severity": "low" }
+    ],
+    "invariants": [
+      { "clause_id": "inv_no_unapproved_endpoint", "surface": "network", "kind": "no_unapproved_endpoint", "params": {}, "description": "No unapproved first-party endpoint", "severity": "high" },
+      { "clause_id": "inv_no_third_party", "surface": "network", "kind": "no_third_party", "params": {}, "description": "No third-party request", "severity": "high" },
+      { "clause_id": "inv_storage_untouched", "surface": "dom", "kind": "storage_untouched", "params": {}, "description": "No storage writes", "severity": "medium" }
+    ],
+    "derived_from": [ { "surface": "code", "ref": "seed-apps/shop/server.js:58-70" }, { "surface": "network", "ref": "POST /api/cart" } ]
+  },
+  {
+    "tool_id": "shop.place_order",
+    "preconditions": [
+      { "clause_id": "pre_logged_in", "surface": "aria", "kind": "auth_state", "params": { "logged_in": true }, "description": "User must be logged in", "severity": "high" },
+      { "clause_id": "pre_cart_nonempty", "surface": "db", "kind": "db_row_exists", "params": { "table": "cart_items", "where": { "user_id": 1 } }, "description": "Cart must be non-empty", "severity": "high" }
+    ],
+    "postconditions": [
+      { "clause_id": "post_order_row", "surface": "db", "kind": "db_delta", "params": { "table": "orders", "inserted": 1 }, "description": "Exactly one order inserted", "severity": "high" },
+      { "clause_id": "post_cart_cleared", "surface": "db", "kind": "db_delta", "params": { "table": "cart_items", "inserted": 0 }, "description": "Cart rows not re-inserted", "severity": "medium" },
+      { "clause_id": "post_one_post", "surface": "network", "kind": "network_calls", "params": { "method": "POST", "path": "/api/orders", "min": 1, "max": 1 }, "description": "Exactly one POST /api/orders", "severity": "high" },
+      { "clause_id": "post_audit", "surface": "audit", "kind": "audit_event", "params": { "event": "order.place", "count": 1 }, "description": "One order.place audit event", "severity": "high" }
+    ],
+    "invariants": [
+      { "clause_id": "inv_no_unapproved_endpoint", "surface": "network", "kind": "no_unapproved_endpoint", "params": {}, "description": "No unapproved endpoint", "severity": "high" },
+      { "clause_id": "inv_no_third_party", "surface": "network", "kind": "no_third_party", "params": {}, "description": "No third-party request", "severity": "high" },
+      { "clause_id": "inv_storage_untouched", "surface": "dom", "kind": "storage_untouched", "params": {}, "description": "No storage writes", "severity": "medium" },
+      { "clause_id": "inv_at_most_once", "surface": "db", "kind": "at_most_once", "params": { "table": "orders" }, "description": "Concurrent place_order must create at most one order", "severity": "high" }
+    ]
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "app": "shop",
+  "version": 1,
+  "generated_at": "2026-10-15T09:00:00Z",
+  "nodes": [
+    { "id": "shop.list_products", "risk_level": "read", "input_fields": [], "output_fields": ["product_id", "name", "price_cents", "stock"], "state_reads": ["products"], "state_writes": [], "status": "verified", "violation_rate": 0.0 },
+    { "id": "shop.add_to_cart", "risk_level": "write", "input_fields": ["product_id", "qty"], "output_fields": ["cart_item_id", "cart_total_cents"], "state_reads": ["products"], "state_writes": ["cart_items", "audit_log"], "status": "verified", "violation_rate": 0.0 },
+    { "id": "shop.view_cart", "risk_level": "read", "input_fields": [], "output_fields": ["cart_item_id", "product_id", "qty"], "state_reads": ["cart_items"], "state_writes": [], "status": "verified", "violation_rate": 0.0 },
+    { "id": "shop.remove_from_cart", "risk_level": "delete", "input_fields": ["product_id"], "output_fields": [], "state_reads": ["cart_items"], "state_writes": ["cart_items", "audit_log"], "status": "verified", "violation_rate": 0.0 },
+    { "id": "shop.place_order", "risk_level": "payment", "input_fields": ["confirm"], "output_fields": ["order_id", "total_cents"], "state_reads": ["cart_items"], "state_writes": ["orders", "order_items", "cart_items", "audit_log"], "status": "quarantined", "violation_rate": 0.42 }
+  ],
+  "edges": [
+    { "src": "shop.list_products", "dst": "shop.add_to_cart", "type": "data", "field": "product_id", "evidence": "rule", "confidence": 0.9, "label": true },
+    { "src": "shop.add_to_cart", "dst": "shop.view_cart", "type": "order", "evidence": "trace", "confidence": 1.0, "label": true },
+    { "src": "shop.add_to_cart", "dst": "shop.place_order", "type": "state", "evidence": "contract", "confidence": 0.95, "label": true },
+    { "src": "shop.view_cart", "dst": "shop.remove_from_cart", "type": "data", "field": "product_id", "evidence": "rule", "confidence": 0.8, "label": true },
+    { "src": "shop.add_to_cart", "dst": "shop.place_order", "type": "order", "evidence": "trace", "confidence": 1.0, "label": true }
+  ],
+  "invariants": [
+    { "id": "inv_order_requires_cart", "kind": "requires", "tools": ["shop.add_to_cart", "shop.place_order"], "description": "place_order requires a prior add_to_cart in the session" },
+    { "id": "inv_order_once", "kind": "at_most_once", "tools": ["shop.place_order"], "description": "At most one order per checkout intent" },
+    { "id": "inv_order_not_concurrent", "kind": "never_concurrent", "tools": ["shop.place_order"], "description": "place_order must not run concurrently with itself" }
+  ]
+}

@@ -1,0 +1,6 @@
+{"session_id":"s_fix01","run_id":"r_fix01","seq":0,"t_ms":0,"phase":"during","kind":"tool_start","data":{"tool_id":"shop.add_to_cart","args":{"product_id":1,"qty":1},"mode":"single"}}
+{"session_id":"s_fix01","run_id":"r_fix01","seq":1,"t_ms":12,"phase":"during","kind":"network_request","data":{"request_id":"n1","method":"POST","url":"http://127.0.0.1:5101/api/cart","host":"127.0.0.1:5101","third_party":false,"approved":true,"body_bytes":28,"initiator":"fetch"}}
+{"session_id":"s_fix01","run_id":"r_fix01","seq":2,"t_ms":41,"phase":"during","kind":"network_response","data":{"request_id":"n1","status":201,"body_bytes":44,"mime":"application/json"}}
+{"session_id":"s_fix01","run_id":"r_fix01","seq":3,"t_ms":43,"phase":"during","kind":"audit","data":{"event":"cart.add","actor":"alice","entity":"cart_items","entity_id":"7"}}
+{"session_id":"s_fix01","run_id":"r_fix01","seq":4,"t_ms":48,"phase":"during","kind":"dom_mutation","data":{"added":1,"removed":0,"attr_changed":1,"text_changed":1,"target_selector":"[data-testid=cart-count]"}}
+{"session_id":"s_fix01","run_id":"r_fix01","seq":5,"t_ms":52,"phase":"during","kind":"tool_end","data":{"status":"ok","output":{"cart_item_id":7,"cart_total_cents":1299},"error":null}}

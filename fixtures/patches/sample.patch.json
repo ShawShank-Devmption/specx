@@ -1,0 +1,14 @@
+{
+  "patch_id": "p_fix01",
+  "tool_id": "shop.add_to_cart",
+  "base_metadata_revision": 0,
+  "source_trial_ids": ["shop.t03.verified.s1", "shop.t03.verified.s2"],
+  "modality": "multimodal_structured",
+  "ops": [
+    { "op": "set_param_description", "param": "product_id", "value": "Numeric id of the product (the `product_id` field returned by list_products), NOT the product name.", "rationale": "In 2/5 failing trials the agent passed the product name string; screenshot shows a 400 toast." },
+    { "op": "set_description", "value": "Add a quantity of one product to the cart. Look up the numeric product_id with list_products first. Does not check out.", "rationale": "Make the data dependency on list_products explicit." }
+  ],
+  "model": "claude-opus-5-5",
+  "confidence": 0.82,
+  "created_at": "2026-10-15T12:00:00Z"
+}

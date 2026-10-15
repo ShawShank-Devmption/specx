@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specx.dev/contracts/contract.schema.json",
+  "title": "ToolContract",
+  "description": "Executable pre/postconditions for one tool, derived by F1 from the five evidence surfaces. Owned by Dev A. Every clause must be mechanically checkable by the sandbox.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tool_id", "preconditions", "postconditions", "invariants"],
+  "properties": {
+    "tool_id": { "type": "string" },
+    "preconditions": { "type": "array", "items": { "$ref": "#/$defs/clause" } },
+    "postconditions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/clause" } },
+    "invariants": { "type": "array", "items": { "$ref": "#/$defs/clause" }, "description": "Safety invariants checked on EVERY run regardless of tool: no_third_party, storage_untouched, no_unapproved_endpoint, at_most_once." },
+    "derived_from": {
+      "type": "array",
+      "items": { "type": "object", "required": ["surface", "ref"], "properties": { "surface": { "type": "string", "enum": ["code", "dom", "aria", "network", "audit"] }, "ref": { "type": "string" } } }
+    }
+  },
+  "$defs": {
+    "clause": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clause_id", "surface", "kind", "params", "description", "severity"],
+      "properties": {
+        "clause_id": { "type": "string", "pattern": "^(pre|post|inv)_[a-z0-9_]+$" },
+        "surface": { "type": "string", "enum": ["code", "dom", "aria", "network", "audit", "db"] },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "dom_exists", "dom_absent", "dom_text_contains", "url_matches", "auth_state",
+            "network_calls", "no_unapproved_endpoint", "no_third_party",
+            "db_delta", "db_row_exists", "audit_event", "storage_untouched", "at_most_once", "output_matches"
+          ],
+          "description": "The sandbox implements one checker per kind. Params per kind are documented in contracts/README.md."
+        },
+        "params": { "type": "object" },
+        "description": { "type": "string" },
+        "severity": { "type": "string", "enum": ["low", "medium", "high"] }
+      }
+    }
+  }
+}

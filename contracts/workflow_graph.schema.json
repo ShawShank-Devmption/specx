@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specx.dev/contracts/workflow_graph.schema.json",
+  "title": "WorkflowGraph",
+  "description": "Typed workflow graph for one app version. Built by Dev A (platform/src/graph). Consumed by Dev B (S2 GNN) and Dev C (F4 manifests, dashboard). Also the format S2 writes its predicted edges back into (evidence=gnn).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["app", "version", "nodes", "edges", "invariants"],
+  "properties": {
+    "app": { "type": "string" },
+    "version": { "type": "integer" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "risk_level", "input_fields", "output_fields", "state_reads", "state_writes"],
+        "properties": {
+          "id": { "type": "string", "description": "tool_id" },
+          "risk_level": { "type": "string", "enum": ["read", "write", "delete", "payment"] },
+          "input_fields": { "type": "array", "items": { "type": "string" } },
+          "output_fields": { "type": "array", "items": { "type": "string" } },
+          "state_reads": { "type": "array", "items": { "type": "string" }, "description": "DB tables / storage keys read (from code + network evidence)." },
+          "state_writes": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["generated", "verified", "quarantined"] },
+          "violation_rate": { "type": "number", "minimum": 0, "maximum": 1, "description": "From verdicts: fraction of runs with ≥1 violation. S2 node label = violation_rate > 0." }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["src", "dst", "type", "evidence", "confidence"],
+        "properties": {
+          "src": { "type": "string" },
+          "dst": { "type": "string" },
+          "type": { "type": "string", "enum": ["order", "state", "data"], "description": "order: src observed before dst in traces · state: src's postcondition satisfies dst's precondition · data: src output field feeds dst input field." },
+          "field": { "type": "string", "description": "For data edges: the field name that flows." },
+          "evidence": { "type": "string", "enum": ["trace", "contract", "rule", "gnn", "manual"] },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "label": { "type": ["boolean", "null"], "description": "Ground truth for S2 link prediction when known (manual/trace-confirmed). null = unknown." }
+        }
+      }
+    },
+    "invariants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "tools", "description"],
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "type": "string", "enum": ["requires", "never_before", "at_most_once", "never_concurrent"] },
+          "tools": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "description": { "type": "string" }
+        }
+      }
+    }
+  }
+}

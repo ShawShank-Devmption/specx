@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specx.dev/contracts/app_manifest.schema.json",
+  "title": "AppManifest",
+  "description": "Describes one seed application: how to run it, reset it, log in, and which hosts/endpoints are approved. Lives at platform/seed-apps/<app>/app.json. Owned by Dev A. The sandbox reads it to decide `approved` on every network event; the eval harness reads it for base_url and login.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["app", "port", "base_url", "start_cmd", "approved_hosts", "approved_endpoints", "auth", "tables", "audit_table"],
+  "properties": {
+    "app": { "type": "string" },
+    "port": { "type": "integer" },
+    "base_url": { "type": "string" },
+    "start_cmd": { "type": "string", "description": "Run from platform/, e.g. `node seed-apps/shop/server.js`." },
+    "approved_hosts": { "type": "array", "items": { "type": "string" }, "description": "Hosts the app itself may call. Anything else is third_party=true." },
+    "approved_endpoints": {
+      "type": "array",
+      "items": { "type": "object", "required": ["method", "path"], "properties": { "method": { "type": "string" }, "path": { "type": "string", "description": "Path pattern with :param segments, e.g. /api/cart/:product_id" }, "risk_level": { "type": "string", "enum": ["read", "write", "delete", "payment"] } } },
+      "description": "Every first-party request not matching one of these is approved=false → violates inv_no_unapproved_endpoint."
+    },
+    "auth": { "type": "object", "required": ["login_path", "username", "password"], "properties": { "login_path": { "type": "string" }, "username": { "type": "string" }, "password": { "type": "string" } } },
+    "tables": { "type": "array", "items": { "type": "string" }, "description": "Tables exposed by GET /__test/db (row counts + rows)." },
+    "audit_table": { "type": "string", "const": "audit_log" },
+    "test_hooks": {
+      "type": "object",
+      "description": "All seed apps expose: POST /__test/reset · GET /__test/db · GET /__test/audit?since=<id> · POST /__test/leak {kind,delay_ms} · POST /__test/apply {state}. Documented in contracts/sandbox_api.md."
+    }
+  }
+}

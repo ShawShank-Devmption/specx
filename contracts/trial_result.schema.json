@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specx.dev/contracts/trial_result.schema.json",
+  "title": "TrialResult",
+  "description": "One evaluation-agent episode on one task under one condition. Produced by Dev C's harness (specx.optim.agent). Consumed by the stats engine (specx.stats), the F2 regression gate, and Dev B's ablation scripts. One line per episode in results/trials/*.jsonl.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["trial_id", "app", "condition", "task_id", "seed", "agent_model", "tool_set_version", "success", "steps", "input_tokens", "output_tokens", "wall_ms", "policy_violations", "quarantined_tool_calls", "unapproved_calls", "timestamp"],
+  "properties": {
+    "trial_id": { "type": "string" },
+    "app": { "type": "string" },
+    "condition": { "type": "string", "enum": ["raw_dom", "generated", "verified", "optimised"] },
+    "task_id": { "type": "string" },
+    "split": { "type": "string", "enum": ["train", "heldout"] },
+    "seed": { "type": "integer", "description": "Paired trials share seeds across conditions: trial k of task T uses seed k under every condition." },
+    "agent_model": { "type": "string" },
+    "tool_set_version": { "type": "string", "description": "`${app}@v${version}.r${metadata_revision}` or 'none' for raw_dom." },
+    "revision_id": { "type": "string", "description": "F2 revision this trial evaluates (optimised condition / gate trials)." },
+    "success": { "type": "boolean" },
+    "steps": { "type": "integer", "minimum": 0 },
+    "input_tokens": { "type": "integer", "minimum": 0 },
+    "output_tokens": { "type": "integer", "minimum": 0 },
+    "wall_ms": { "type": "number" },
+    "policy_violations": {
+      "type": "array",
+      "items": { "type": "object", "required": ["kind", "detail"], "properties": { "kind": { "type": "string", "enum": ["forbidden_action", "unconfirmed_destructive", "unapproved_endpoint", "scope_exceeded", "quarantined_tool"] }, "detail": { "type": "string" }, "step": { "type": "integer" } } }
+    },
+    "quarantined_tool_calls": { "type": "integer", "minimum": 0 },
+    "unapproved_calls": { "type": "integer", "minimum": 0 },
+    "failure_reason": { "type": "string", "enum": ["wrong_tool", "bad_args", "gave_up", "max_steps", "handler_error", "policy_stop", "none"] },
+    "trace_path": { "type": "string", "description": "Path to the full episode transcript JSON (messages, tool calls, screenshots). S4 harvests failure bundles from here." },
+    "timestamp": { "type": "string", "format": "date-time" }
+  }
+}

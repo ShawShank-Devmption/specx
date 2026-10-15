@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specx.dev/contracts/event_record.schema.json",
+  "title": "EventRecord",
+  "description": "One line of the sandbox event stream (JSONL). Emitted by Dev A's sandbox from CDP network events, a MutationObserver injected into the page, storage hooks and the seed app's audit table. Consumed by Dev B (S6 feature windower, S1 state) and Dev C (S4 failure bundles).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["session_id", "run_id", "seq", "t_ms", "phase", "kind", "data"],
+  "properties": {
+    "session_id": { "type": "string" },
+    "run_id": { "type": "string", "description": "The invoke this event belongs to. Events between invokes carry the previous run_id with phase=post." },
+    "seq": { "type": "integer", "minimum": 0, "description": "Monotonic per session." },
+    "t_ms": { "type": "number", "description": "Milliseconds since the invoke's tool_start event (negative = before)." },
+    "phase": { "type": "string", "enum": ["pre", "during", "post"], "description": "pre: before handler ran; during: handler running; post: after handler returned (where slow leaks live). The sandbox keeps observing for post_observe_ms after return." },
+    "kind": { "type": "string", "enum": ["tool_start", "tool_end", "network_request", "network_response", "dom_mutation", "storage", "console", "navigation", "audit"] },
+    "data": {
+      "type": "object",
+      "description": "Per kind: tool_start{tool_id,args,mode} · tool_end{status,output,error} · network_request{request_id,method,url,host,third_party:bool,approved:bool,body_bytes,initiator} · network_response{request_id,status,body_bytes,mime} · dom_mutation{added,removed,attr_changed,text_changed,target_selector} · storage{area:'local'|'session'|'cookie'|'indexeddb',op:'set'|'remove'|'clear',key} · console{level,text} · navigation{url} · audit{event,actor,entity,entity_id}"
+    }
+  }
+}

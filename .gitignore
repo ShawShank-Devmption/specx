@@ -1,0 +1,43 @@
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Node
+node_modules/
+platform/dist/
+dashboard/dist/
+dashboard/node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+python/.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Runtime state
+platform/seed-apps/*/live.db
+platform/seed-apps/*/live.db-journal
+results/**
+!results/.gitkeep
+!results/final/
+!results/final/**
+checkpoints/
+*.ckpt
+*.pt
+*.zip
+
+# Playwright
+playwright-report/
+test-results/

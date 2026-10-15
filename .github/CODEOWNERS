@@ -1,0 +1,13 @@
+# Changes to shared contracts need all three devs; everything else needs the owner.
+/contracts/            @dev-a @dev-b @dev-c
+/fixtures/             @dev-a @dev-b @dev-c
+/docs/                 @dev-a @dev-b @dev-c
+/platform/             @dev-a
+/python/specx/safety/  @dev-b
+/python/specx/client/  @dev-c
+/python/specx/optim/   @dev-c
+/python/specx/evalx/   @dev-c
+/python/specx/stats/   @dev-c
+/dashboard/            @dev-c
+/Makefile              @dev-a
+/.github/              @dev-a

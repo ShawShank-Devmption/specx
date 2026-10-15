@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specx.dev/contracts/patch.schema.json",
+  "title": "ToolPatch",
+  "description": "Structured metadata revision proposed by the F2 reviser (text baseline) or the S4 multimodal patch generator. Applied by specx.optim.patch.apply_patch to a ToolDefinition, producing metadata_revision+1. Never changes handler.code except op=fix_selector. Owned by Dev C.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["patch_id", "tool_id", "base_metadata_revision", "source_trial_ids", "modality", "ops", "model"],
+  "properties": {
+    "patch_id": { "type": "string" },
+    "tool_id": { "type": "string" },
+    "base_metadata_revision": { "type": "integer", "description": "The revision this patch was generated against. Apply refuses if it does not match." },
+    "source_trial_ids": { "type": "array", "items": { "type": "string" }, "description": "Failing trials whose bundles were shown to the model." },
+    "modality": { "type": "string", "enum": ["text_trace", "text_structured", "multimodal_structured"], "description": "Ablation arm that produced this patch." },
+    "ops": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["op", "rationale"],
+        "properties": {
+          "op": { "type": "string", "enum": ["rename", "set_description", "set_param_description", "add_enum", "set_example", "mark_required", "fix_selector"] },
+          "param": { "type": "string", "description": "For param-level ops: the input_schema property name." },
+          "value": { "description": "New name / description / enum list / example / selector." },
+          "old_value": { "description": "For fix_selector: the selector being replaced." },
+          "rationale": { "type": "string", "maxLength": 500 }
+        }
+      }
+    },
+    "model": { "type": "string" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

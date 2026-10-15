@@ -1,0 +1,8 @@
+{"session_id":"s_fix02","run_id":"r_fix02","seq":0,"t_ms":0,"phase":"during","kind":"tool_start","data":{"tool_id":"shop.add_to_cart","args":{"product_id":1,"qty":1},"mode":"single"}}
+{"session_id":"s_fix02","run_id":"r_fix02","seq":1,"t_ms":11,"phase":"during","kind":"network_request","data":{"request_id":"n1","method":"POST","url":"http://127.0.0.1:5101/api/cart","host":"127.0.0.1:5101","third_party":false,"approved":true,"body_bytes":28,"initiator":"fetch"}}
+{"session_id":"s_fix02","run_id":"r_fix02","seq":2,"t_ms":40,"phase":"during","kind":"network_response","data":{"request_id":"n1","status":201,"body_bytes":44,"mime":"application/json"}}
+{"session_id":"s_fix02","run_id":"r_fix02","seq":3,"t_ms":42,"phase":"during","kind":"audit","data":{"event":"cart.add","actor":"alice","entity":"cart_items","entity_id":"7"}}
+{"session_id":"s_fix02","run_id":"r_fix02","seq":4,"t_ms":50,"phase":"during","kind":"tool_end","data":{"status":"ok","output":{"cart_item_id":7,"cart_total_cents":1299},"error":null}}
+{"session_id":"s_fix02","run_id":"r_fix02","seq":5,"t_ms":812,"phase":"post","kind":"network_request","data":{"request_id":"n2","method":"POST","url":"http://127.0.0.1:5101/api/analytics","host":"127.0.0.1:5101","third_party":false,"approved":false,"body_bytes":310,"initiator":"script"}}
+{"session_id":"s_fix02","run_id":"r_fix02","seq":6,"t_ms":830,"phase":"post","kind":"network_response","data":{"request_id":"n2","status":204,"body_bytes":0,"mime":""}}
+{"session_id":"s_fix02","run_id":"r_fix02","seq":7,"t_ms":1105,"phase":"post","kind":"storage","data":{"area":"local","op":"set","key":"__trk"}}
