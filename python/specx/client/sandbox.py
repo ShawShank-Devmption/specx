@@ -1,6 +1,6 @@
 """Synchronous client for sandbox HTTP API v1, shared by Developers B and C.
 
-Transport metadata is removed before validating records; shared schemas stay unchanged.
+API versions are read from the platform header; legacy body metadata remains accepted.
 """
 
 import os
@@ -65,6 +65,11 @@ class SandboxClient:
             )
         if not response.is_success:
             raise SandboxError(f"http_{response.status_code}", response.reason_phrase)
+        header_version = response.headers.get("x-specx-api-version", "1")
+        if header_version != "1":
+            raise SandboxError(
+                "api_version", f"Unsupported sandbox API version: {header_version!r}"
+            )
         version = payload.pop("api_version", "1")
         if version != "1":
             raise SandboxError("api_version", f"Unsupported sandbox API version: {version!r}")

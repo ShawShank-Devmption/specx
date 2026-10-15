@@ -37,18 +37,25 @@ sandbox: ## start the sandbox HTTP server on :4000 (expects apps running)
 generate: ## F3: results/tools/<app>.tools.json + results/contracts/<app>.contracts.json
 	cd platform && npm run cli -- generate --app shop && npm run cli -- generate --app admin
 
-verify: ## F1 (+S6 scoring): results/verdicts/f1.jsonl, tools get status verified|quarantined
+verify: ## F1: results/verdicts/f1.jsonl, tools get status verified|quarantined (make s6 later fills verdict.anomaly)
 	cd platform && npm run cli -- verify --app shop && npm run cli -- verify --app admin
-	$(PY) python -m specx.safety.s6.score --in results/verdicts/f1.jsonl --out results/verdicts/f1.jsonl
 
-graph: ## results/graphs/<app>.graph.json
+graph: ## results/graphs/<app>.graph.json (rerun after s1 and evaluate; keeps S2 gnn edges)
 	cd platform && npm run cli -- graph --app shop && npm run cli -- graph --app admin
 
-s6: ## train + evaluate anomaly layer → results/s6/metrics.json
+platform-demo: generate verify graph ## Dev A stages only (apps must be running)
+
+versions: ## record node/playwright/chromium versions → results/final/platform_versions.json
+	cd platform && npm run cli -- versions
+
+s6: ## train + evaluate anomaly layer → results/s6/metrics.json; also scores results/verdicts/f1.jsonl (anomaly field)
 	$(PY) python -m specx.safety.s6.run --apps shop,admin --out results/s6
 
 s1: ## PPO vs random vs coverage fuzzers → results/s1/metrics.json + results/verdicts/s1*.jsonl
 	$(PY) python -m specx.safety.s1.run --apps shop,admin --steps 1500 --seeds 3 --out results/s1
+
+quarantine: ## fold S1/S6 violations into tool status (run after s1)
+	cd platform && npm run cli -- quarantine --app shop && npm run cli -- quarantine --app admin
 
 s2: ## GNN vs rule-based vs MLP → results/s2/metrics.json + gnn edges merged into graphs
 	$(PY) python -m specx.safety.s2.run --graphs results/graphs --verdicts results/verdicts --out results/s2
@@ -65,7 +72,7 @@ evaluate: ## F4 verified + optimised conditions → results/trials/verified.json
 report: ## stats + results/final/REPORT.md + results/final/numbers.json (dashboard reads this)
 	$(PY) python -m specx.stats.report --results results --out results/final
 
-demo: generate verify graph s6 s1 s2 baseline optimise evaluate report ## full pipeline (apps + sandbox must be running)
+demo: generate verify s6 s1 quarantine graph s2 baseline optimise evaluate report ## full pipeline (apps + sandbox must be running)
 
 dashboard: ## serve the React dashboard on :5173
 	cd dashboard && npm run dev
