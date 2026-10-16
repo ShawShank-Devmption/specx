@@ -64,7 +64,11 @@ s1: ## PPO vs random vs coverage fuzzers → results/s1/metrics.json + results/v
 quarantine: ## fold S1/S6 violations into tool status (run after s1)
 	cd platform && npm run cli -- quarantine --app shop && npm run cli -- quarantine --app admin
 
-export: ## verified tools → results/webmcp/<app>.webmcp.js, served by each app at /webmcp.js (run after quarantine)
+webmcp: ## verify the WebMCP set (page-scoped ui tools) in the sandbox, then export it (run after generate)
+	cd platform && npm run cli -- verify --app shop --set webmcp && npm run cli -- verify --app admin --set webmcp
+	$(MAKE) export
+
+export: ## verified WebMCP set → results/webmcp/<app>.webmcp.js, served by each app at /webmcp.js
 	cd platform && npm run cli -- export --app shop && npm run cli -- export --app admin
 
 s2: ## GNN vs rule-based vs MLP → results/s2/metrics.json + gnn edges merged into graphs

@@ -104,7 +104,7 @@ function inputSchema(c: Candidate, naming: Naming): JsonSchema {
   return { type: "object", properties, required: c.inputs.filter((f) => f.required).map((f) => f.name), additionalProperties: false };
 }
 
-function provenance(c: Candidate): Provenance[] {
+export function provenance(c: Candidate): Provenance[] {
   const out: Provenance[] = [{ surface: "code", ref: `${c.route.file}:${c.route.line}`, snippet: c.route.snippet }];
   for (const t of c.triggers) {
     out.push({ surface: "dom", ref: t.selector });

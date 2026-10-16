@@ -13,7 +13,7 @@ import { validate } from "../contracts/validate.js";
 import { log } from "../log.js";
 import { ensureParent, eventsPath, repoRelative, screenshotPath, verdictsPath } from "../paths.js";
 import { observe, refHandle } from "./aria.js";
-import { buildEffectDiff, evaluateRun } from "./effects.js";
+import { buildEffectDiff, evaluatePreconditions, evaluateRun, type Evaluated } from "./effects.js";
 import { SandboxError } from "./errors.js";
 import { observeContext, observePage } from "./observe.js";
 import { EventRecorder } from "./recorder.js";
@@ -24,6 +24,8 @@ type Args = Record<string, unknown>;
 interface Call {
   tool_id: string;
   args: Args;
+  /** Page a ui tool ran on (resolved before the run), so replay reopens exactly that page. */
+  page?: string;
 }
 /** Everything since the last reset that shaped the state a run started from; replay re-applies it. */
 type Step = { kind: "calls"; calls: Call[] } | { kind: "apply"; state: Record<string, unknown> } | { kind: "leak"; leak: string; delayMs: number };
@@ -38,6 +40,8 @@ export interface InvokeOptions {
   source: Source;
   postObserveMs?: number;
   screenshot?: boolean;
+  /** Concrete page for a page-scoped (ui) tool; defaults to the tool's pattern filled from the DB. */
+  page?: string;
 }
 export type DomAction = { action: "click"; ref: string } | { action: "type"; ref: string; text: string } | { action: "press"; key: string } | { action: "navigate"; url: string };
 
@@ -108,6 +112,27 @@ export class Session {
       this.extraPages.push(p);
     }
     return this.extraPages.slice(0, n);
+  }
+
+  /** The concrete page a page-scoped tool must run on, or null for tools that run on any page. */
+  private async pageFor(tool: ToolDefinition, requested?: string): Promise<string | null> {
+    const pattern = tool.handler.page;
+    if (tool.handler.kind !== "ui" && (!pattern || pattern === "*")) return null;
+    if (requested) return requested;
+    if (!pattern || pattern === "*") return tool.handler.page_example ?? null;
+    const segs = pattern.split("/");
+    if (!segs.some((s) => s.startsWith(":"))) return pattern;
+    const db = await this.db();
+    const filled = segs.map((seg, i) => {
+      if (!seg.startsWith(":")) return seg;
+      const rows = db[segs[i - 1] ?? ""]?.rows ?? [];
+      return rows.length ? String(rows.at(-1)?.id) : null;
+    });
+    return filled.every((s) => s !== null) ? filled.join("/") : (tool.handler.page_example ?? null);
+  }
+
+  private async open(page: Page, target: string | null | undefined): Promise<void> {
+    if (target) await page.goto(target);
   }
 
   private onEvent(page: Page | null, kind: EventRecord["kind"], data: Record<string, unknown>): void {
@@ -229,16 +254,20 @@ export class Session {
   private async invokeNow(toolId: string, args: Args, opts: InvokeOptions, mode: Exclude<Mode, "concurrent">): Promise<Verdict> {
     const { tool, contract } = this.tool(toolId);
     const postObserveMs = opts.postObserveMs ?? 1500;
+    const pagePath = await this.pageFor(tool, opts.page);
+    await this.open(this.page, pagePath);
     const runId = `${this.id}_r${++this.counter}`;
     const prefix = this.snapshotHistory();
     const started = new Date();
     const t0 = performance.now();
     const urlBefore = this.page.url();
     const dbBefore = await this.db();
+    const user = this.userOf(dbBefore);
+    const pre = await evaluatePreconditions(contract, { manifest: this.manifest, toolId, args, output: null, user, dbBefore, dbAfter: dbBefore, newAudit: [], events: [], dom: this.probe(this.page) });
     this.pageRun.clear();
     this.recorder.begin([runId]);
     this.recorder.setPhase("during");
-    this.recorder.record("tool_start", { tool_id: toolId, args, mode });
+    this.recorder.record("tool_start", { tool_id: toolId, args, mode, ...(pagePath ? { page: pagePath } : {}) });
     const { output, error } = await this.runHandler(this.page, tool.handler.code, args);
     this.recorder.record("tool_end", { status: error ? "error" : "ok", output, error });
     this.recorder.setPhase("post");
@@ -250,11 +279,12 @@ export class Session {
     const newAudit = this.newAudit(dbBefore, dbAfter);
     this.emitAudit(newAudit, runId, emitted);
     const events = this.recorder.eventsFor(runId);
-    const ctx: RunContext = { manifest: this.manifest, toolId, args, output, user: this.userOf(dbBefore), dbBefore, dbAfter, newAudit, events, dom: this.probe(this.page) };
-    const ev = await evaluateRun(contract, ctx, { mode, handlerError: error });
+    const ctx: RunContext = { manifest: this.manifest, toolId, args, output, user, dbBefore, dbAfter, newAudit, events, dom: this.probe(this.page) };
+    const ev = await evaluateRun(contract, ctx, { mode, handlerError: error, pre });
 
-    this.history.push({ kind: "calls", calls: [{ tool_id: toolId, args }] });
-    this.runs.set(runId, { call: { tool_id: toolId, args }, prefix, seed: this.resetSeed, source: opts.source, postObserveMs });
+    const call: Call = { tool_id: toolId, args, ...(pagePath ? { page: pagePath } : {}) };
+    this.history.push({ kind: "calls", calls: [call] });
+    this.runs.set(runId, { call, prefix, seed: this.resetSeed, source: opts.source, postObserveMs });
     const verdict: Verdict = {
       run_id: runId,
       session_id: this.id,
@@ -291,10 +321,17 @@ export class Session {
       const group = `${this.id}_g${++this.counter}`;
       const runIds = calls.map(() => `${this.id}_r${++this.counter}`);
       const pages = await this.extraPagesFor(calls.length);
+      const targets = await Promise.all(resolved.map((c) => this.pageFor(c.tool, c.page)));
+      for (const [i, target] of targets.entries()) await this.open(pages[i] as Page, target);
       const prefix = this.snapshotHistory();
       const started = new Date();
       const t0 = performance.now();
       const dbBefore = await this.db();
+      const user = this.userOf(dbBefore);
+      const pres: Evaluated[][] = [];
+      for (const [i, c] of resolved.entries()) {
+        pres.push(await evaluatePreconditions(c.contract, { manifest: this.manifest, toolId: c.tool_id, args: c.args, output: null, user, dbBefore, dbAfter: dbBefore, newAudit: [], events: [], dom: this.probe(pages[i] as Page) }));
+      }
       this.pageRun.clear();
       pages.forEach((p, i) => this.pageRun.set(p, runIds[i] as string));
       this.recorder.begin(runIds);
@@ -313,7 +350,6 @@ export class Session {
       const dbAfter = await this.db();
       const newAudit = this.newAudit(dbBefore, dbAfter);
       this.emitAudit(newAudit, runIds[0] as string, new Set());
-      const user = this.userOf(dbBefore);
       const verdicts: Verdict[] = [];
       for (const [i, c] of resolved.entries()) {
         const runId = runIds[i] as string;
@@ -321,8 +357,9 @@ export class Session {
         const events = this.recorder.eventsFor(runId);
         const r = results[i] as { output: unknown; error: string | null };
         const ctx: RunContext = { manifest: this.manifest, toolId: c.tool_id, args: c.args, output: r.output, user, dbBefore, dbAfter, newAudit, events, dom: this.probe(page), group: { dbBefore, dbAfter } };
-        const ev = await evaluateRun(c.contract, ctx, { mode: "concurrent", handlerError: r.error });
-        this.runs.set(runId, { call: { tool_id: c.tool_id, args: c.args }, prefix, seed: this.resetSeed, source: opts.source, postObserveMs });
+        const ev = await evaluateRun(c.contract, ctx, { mode: "concurrent", handlerError: r.error, pre: pres[i] as Evaluated[] });
+        const target = targets[i];
+        this.runs.set(runId, { call: { tool_id: c.tool_id, args: c.args, ...(target ? { page: target } : {}) }, prefix, seed: this.resetSeed, source: opts.source, postObserveMs });
         verdicts.push(
           this.persist({
             run_id: runId,
@@ -348,7 +385,7 @@ export class Session {
           }),
         );
       }
-      this.history.push({ kind: "calls", calls: calls.map((c) => ({ ...c })) });
+      this.history.push({ kind: "calls", calls: calls.map((c, i) => ({ tool_id: c.tool_id, args: c.args, ...(targets[i] ? { page: targets[i] as string } : {}) })) });
       return { concurrency_group: group, verdicts };
     });
   }
@@ -364,11 +401,12 @@ export class Session {
         else if (step.kind === "leak") await this.hook("POST", "/__test/leak", { kind: step.leak, delay_ms: step.delayMs });
         else {
           const pages = step.calls.length === 1 ? [this.page] : await this.extraPagesFor(step.calls.length);
+          for (const [i, c] of step.calls.entries()) await this.open(pages[i] as Page, c.page);
           await Promise.all(step.calls.map((c, i) => this.runHandler(pages[i] as Page, this.tool(c.tool_id).tool.handler.code, c.args)));
         }
         this.history.push(step);
       }
-      return this.invokeNow(rec.call.tool_id, rec.call.args, { source: rec.source, postObserveMs: rec.postObserveMs }, "replay");
+      return this.invokeNow(rec.call.tool_id, rec.call.args, { source: rec.source, postObserveMs: rec.postObserveMs, ...(rec.call.page ? { page: rec.call.page } : {}) }, "replay");
     });
   }
 

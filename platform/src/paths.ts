@@ -26,6 +26,9 @@ export const verdictsPath = (source: string): string => inResults("verdicts", `$
 export const eventsPath = (sessionId: string): string => inResults("events", `${sessionId}.jsonl`);
 export const screenshotPath = (runId: string): string => inResults("screenshots", `${runId}.png`);
 export const graphPath = (app: string): string => inResults("graphs", `${app}.graph.json`);
+/** WebMCP-native tool set (ui handlers, page-scoped), verified separately and exported from here. */
+export const webmcpToolsPath = (app: string): string => inResults("webmcp", `${app}.tools.json`);
+export const webmcpContractsPath = (app: string): string => inResults("webmcp", `${app}.contracts.json`);
 export const manifestPath = (app: string): string => path.join(SEED_APPS_DIR, app, "app.json");
 
 /** Path relative to the repo root, used inside records so they stay portable between machines. */

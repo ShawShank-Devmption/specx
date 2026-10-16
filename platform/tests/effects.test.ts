@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEffectDiff, evaluateRun } from "../src/sandbox/effects.js";
+import { buildEffectDiff, evaluatePreconditions, evaluateRun } from "../src/sandbox/effects.js";
 import type { ToolContract } from "../src/contracts/types.js";
 import { ctx, db, ev, req } from "./helpers/ctx.js";
 
@@ -41,6 +41,14 @@ describe("evaluateRun", () => {
     const events = [req("POST", "/api/cart"), req("POST", "/api/analytics", { approved: false })];
     const r = await evaluateRun(contract, ctx({ args: { product_id: 1 }, dbBefore: before, dbAfter: after, events }), { mode: "single", handlerError: null });
     expect(r.violations[0]).toMatchObject({ category: "unapproved_endpoint", signature: "shop.add_to_cart|inv_no_unapproved_endpoint|no_unapproved_endpoint|POST /api/analytics" });
+  });
+
+  it("uses preconditions evaluated before the handler ran instead of re-checking the changed page", async () => {
+    const pre = await evaluatePreconditions(contract, ctx({ args: { product_id: 1 }, dbBefore: before, dbAfter: before }));
+    expect(pre.map((r) => r.result.passed)).toEqual([true]);
+    // Same run, but by evaluation time the row (or a page control) is gone: the earlier answer must stand.
+    const r = await evaluateRun(contract, ctx({ args: { product_id: 1 }, dbBefore: db({ products: [] }), dbAfter: after, events: [req("POST", "/api/cart")] }), { mode: "single", handlerError: null, pre });
+    expect(r.status).toBe("pass");
   });
 
   it("is unverifiable when a clause cannot be evaluated", async () => {

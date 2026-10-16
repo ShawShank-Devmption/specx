@@ -67,7 +67,30 @@ claude mcp add specx-admin -- "$PWD/platform/node_modules/.bin/tsx" "$PWD/platfo
 
 For Claude Desktop, add the same command and arguments, as absolute paths, under `mcpServers` in its config file.
 
-**WebMCP (agents that browse the site).** `make export` writes `results/webmcp/<app>.webmcp.js` and a manifest. Each app serves the script at `/webmcp.js` and registers the tools through `document.modelContext.registerTool`, with a fallback to `navigator.modelContext` for older drafts and the MCP-B extension.
+**WebMCP (agents that browse the site), the project's real output.** `make generate` also writes a WebMCP-native tool set; `make webmcp` verifies it in the sandbox and exports the verified tools as `results/webmcp/<app>.webmcp.js`, which each app serves at `/webmcp.js`.
+- Write actions are `ui` tools: they fill the page's own fields and click its own button, so the app's code runs and the page updates in front of the user. They return what the server answered.
+- Each tool is registered only on its page: `add_to_cart` on `/products/:id` (the product comes from the page; the agent only gives `qty`), `remove_from_cart` on `/cart`. Reads are available on every page.
+- Payment and delete tools show an in-page dialog and run only after the user clicks **Allow**. The WebMCP draft has no confirmation API, so the site asks.
+- Quarantined tools are never exported.
+
+### How to test the WebMCP tools
+
+1. **Automated, real browser (about 2 minutes):** generates from a live crawl, verifies in the sandbox, exports, then uses the tools in the page through a stand-in WebMCP host.
+
+   ```bash
+   cd platform && SANDBOX_INTEGRATION=1 npx vitest run tests/webmcp-ui.integration.test.ts
+   ```
+
+2. **By hand, any Chrome, no flag:** with `make apps` running and `make generate webmcp` done, open http://127.0.0.1:5101, log in as `alice` / `alice123`, open a product page and run in the DevTools console:
+
+   ```js
+   __specxWebMCPTools.map(t => t.name)                                    // tools for this page
+   await __specxWebMCPTools.find(t => t.name === "add_to_cart").execute({ qty: 2 })
+   ```
+
+   The page shows "Added to cart". On `/cart`, `remove_from_cart` asks you to Allow or Deny first.
+
+3. **As a real browser agent sees it:** in Chrome 146+, enable `chrome://flags/#enable-webmcp-testing`, relaunch, then install Google's Model Context Tool Inspector extension. Open the shop: the inspector lists the tools registered on each page and lets you call them.
 
 ## Results
 

@@ -24,13 +24,20 @@ export interface TriggerRequest {
 }
 
 export interface DomTrigger {
+  /** Page pattern, e.g. /products/:id. */
   page: string;
+  /** Concrete page the control was clicked on, e.g. /products/1. */
+  pagePath?: string;
   selector: string;
   role: string;
   name: string;
   testid?: string;
+  /** data-* attributes of the clicked control (row identity such as data-product-id). */
+  data?: Record<string, string>;
   inputs: DomInput[];
   requests: TriggerRequest[];
+  /** What the user saw after the click: page path and live status text. */
+  after?: { url: string; status: string };
 }
 
 export interface NetworkSample {
@@ -72,7 +79,7 @@ export interface Rejection {
 }
 
 const AUTH_ROUTES = new Set(["POST /api/login"]);
-const hits = (method: string, routePath: string, r: { method: string; path: string; pattern?: string }) =>
+export const hits = (method: string, routePath: string, r: { method: string; path: string; pattern?: string }) =>
   r.method.toUpperCase() === method && (r.pattern ? r.pattern === routePath : patternMatches(routePath, r.path));
 
 function inferType(values: unknown[]): InputType {

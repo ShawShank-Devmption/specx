@@ -22,7 +22,8 @@ commands:
               --namer template|llm   (default template; llm needs ANTHROPIC_API_KEY)
   verify      F1: run every tool in the sandbox -> results/verdicts/f1.jsonl, tool status verified|quarantined
               --runs N (default 3)  --observe MS post-observe window (default 1000)
-  export      verified tools -> results/webmcp/<app>.webmcp.js (+ .json); the app serves it at /webmcp.js
+              --set api|webmcp  which tool set (webmcp = page-scoped ui tools that act through the page)
+  export      verified WebMCP set -> results/webmcp/<app>.webmcp.js (+ .json); the app serves it at /webmcp.js
   graph       typed workflow graph -> results/graphs/<app>.graph.json (keeps S2's gnn edges)
   versions    record node, playwright and chromium versions -> results/final/platform_versions.json (no --app)
   quarantine  fold later evidence into tool status
@@ -37,6 +38,7 @@ export async function main(argv: string[]): Promise<number> {
       app: { type: "string" },
       namer: { type: "string", default: "template" },
       runs: { type: "string", default: "3" },
+      set: { type: "string", default: "api" },
       observe: { type: "string", default: "1000" },
       from: { type: "string", default: "s1,s1_random,s1_coverage" },
       help: { type: "boolean", short: "h", default: false },
@@ -57,7 +59,8 @@ export async function main(argv: string[]): Promise<number> {
       await generateCommand(values.app, values.namer ?? "template");
       return 0;
     case "verify":
-      await verifyCommand(values.app, Number(values.runs), Number(values.observe));
+      if (values.set !== "api" && values.set !== "webmcp") throw new Error("--set must be api or webmcp");
+      await verifyCommand(values.app, Number(values.runs), Number(values.observe), values.set);
       return 0;
     case "export":
       exportCommand(values.app);

@@ -18,7 +18,7 @@ interface Registered {
 }
 
 /** Runs the exported script in a sandboxed context with a fake WebMCP host and a fake fetch. */
-async function load(script: string, host: "document" | "navigator" | "none", fetchImpl: (url: string, init?: { method?: string; body?: string }) => Promise<unknown>) {
+async function load(script: string, host: "document" | "navigator" | "none", fetchImpl: (url: string, init?: { method?: string; body?: string }) => Promise<unknown>, pathname = "/products") {
   const registered: Registered[] = [];
   const modelContext = { registerTool: async (t: Registered) => void registered.push(t) };
   const ctx: Record<string, unknown> = {
@@ -28,6 +28,7 @@ async function load(script: string, host: "document" | "navigator" | "none", fet
     console: { info: () => undefined, warn: () => undefined, error: () => undefined },
     encodeURIComponent,
     JSON,
+    location: { pathname, href: `http://127.0.0.1:5101${pathname}` },
   };
   ctx.window = ctx;
   await vm.runInNewContext(script, ctx);
@@ -82,5 +83,27 @@ describe("exportWebMCP", () => {
     const res = await registered[1]!.execute({ product_id: 99, qty: 1 });
     expect(res.isError).toBe(true);
     expect(res.content[0]!.text).toContain("404");
+  });
+
+  const removeTool: ToolDefinition = {
+    ...tools[1]!,
+    tool_id: "shop.remove_from_cart",
+    name: "remove_from_cart",
+    risk_level: "delete",
+    handler: { kind: "ui", code: "async (input) => ({ removed: input.product_id })", page: "/cart", page_example: "/cart", selectors: ["[data-testid=remove-from-cart]"] },
+  };
+  const scoped = exportWebMCP("shop", [...tools, removeTool], contracts);
+
+  it("records each tool's kind, page and whether it asks the user", () => {
+    expect(scoped.manifest.tools.map((t) => [t.name, t.kind, t.page, t.confirm])).toEqual([
+      ["list_products", "api", "*", false],
+      ["add_to_cart", "api", "*", false],
+      ["remove_from_cart", "ui", "/cart", true],
+    ]);
+  });
+
+  it("registers a page-scoped tool only on its own page", async () => {
+    expect((await load(scoped.script, "document", ok([]), "/products/1")).registered.map((t) => t.name)).toEqual(["list_products", "add_to_cart"]);
+    expect((await load(scoped.script, "document", ok([]), "/cart")).registered.map((t) => t.name)).toEqual(["list_products", "add_to_cart", "remove_from_cart"]);
   });
 });

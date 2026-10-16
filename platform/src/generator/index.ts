@@ -13,12 +13,15 @@ import { buildCandidates, type Rejection } from "./candidates.js";
 import { crawl } from "./dom.js";
 import { emitTool, type Namer } from "./emit.js";
 import { parseRoutes } from "./repo.js";
+import { buildWebmcpTools, type WebmcpBuild } from "./webmcp.js";
 
 export interface GenerateResult {
   tools: ToolDefinition[];
   contracts: ToolContract[];
   rejected: Rejection[];
   pages: string[];
+  /** WebMCP-native set: ui tools scoped to pages, api reads everywhere. */
+  webmcp: WebmcpBuild;
 }
 
 export async function generate(manifest: AppManifest, browser: Browser, opts: { namer: Namer }): Promise<GenerateResult> {
@@ -39,5 +42,8 @@ export async function generate(manifest: AppManifest, browser: Browser, opts: { 
     tools.push(validate<ToolDefinition>("tool_definition", tool));
     contracts.push(validate<ToolContract>("contract", deriveContract(tool, c.route, manifest)));
   }
-  return { tools, contracts, rejected, pages: found.pages };
+  const webmcp = await buildWebmcpTools(candidates, manifest, opts.namer);
+  for (const t of webmcp.tools) validate("tool_definition", t);
+  for (const c of webmcp.contracts) validate("contract", c);
+  return { tools, contracts, rejected, pages: found.pages, webmcp };
 }

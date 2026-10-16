@@ -7,7 +7,7 @@
 import fs from "node:fs";
 import { chromium } from "playwright";
 import type { ToolContract, ToolDefinition, Verdict } from "../contracts/types.js";
-import { contractsPath, repoRelative, toolsPath, verdictsPath } from "../paths.js";
+import { contractsPath, repoRelative, toolsPath, verdictsPath, webmcpContractsPath, webmcpToolsPath } from "../paths.js";
 import { Session } from "../sandbox/session.js";
 import { foldQuarantine, type Reason } from "../verify/decide.js";
 import { verifyTools } from "../verify/run.js";
@@ -24,10 +24,11 @@ const describeReason = (r: Reason) => {
   }
 };
 
-export async function verifyCommand(app: string, runs: number, postObserveMs: number): Promise<void> {
+export async function verifyCommand(app: string, runs: number, postObserveMs: number, set: "api" | "webmcp" = "api"): Promise<void> {
   const manifest = loadManifest(app);
-  const tools = readJson<ToolDefinition[]>(toolsPath(app));
-  const contracts = readJson<ToolContract[]>(contractsPath(app));
+  const file = set === "webmcp" ? webmcpToolsPath(app) : toolsPath(app);
+  const tools = readJson<ToolDefinition[]>(file);
+  const contracts = readJson<ToolContract[]>(set === "webmcp" ? webmcpContractsPath(app) : contractsPath(app));
   const browser = await chromium.launch();
   try {
     const session = await Session.create(browser, manifest);
@@ -35,20 +36,20 @@ export async function verifyCommand(app: string, runs: number, postObserveMs: nu
     await session.close();
     const status = new Map(results.map((r) => [r.tool_id, r.decision.status]));
     writeRecords(
-      toolsPath(app),
+      file,
       "tool_definition",
       tools.map((t) => ({ ...t, status: status.get(t.tool_id) ?? t.status })),
     );
     const replays = results.flatMap((r) => r.verdicts.filter((v) => v.mode === "replay"));
     const deterministic = results.filter((r) => !r.decision.reasons.some((x) => x.kind === "nondeterministic")).length;
-    console.log(`\n${app}: ${results.filter((r) => r.decision.status === "verified").length} verified, ${results.filter((r) => r.decision.status === "quarantined").length} quarantined; replay-deterministic ${deterministic}/${replays.length}\n`);
+    console.log(`\n${app}${set === "webmcp" ? " (WebMCP set)" : ""}: ${results.filter((r) => r.decision.status === "verified").length} verified, ${results.filter((r) => r.decision.status === "quarantined").length} quarantined; replay-deterministic ${deterministic}/${replays.length}\n`);
     console.log(
       table(
         ["tool", "status", "runs", "reasons"],
         results.map((r) => [r.tool_id, r.decision.status, r.verdicts.length, [...new Set(r.decision.reasons.map(describeReason))].join("; ") || "-"]),
       ),
     );
-    console.log(`\nwrote ${repoRelative(toolsPath(app))}; verdicts appended to ${repoRelative(verdictsPath("f1"))}`);
+    console.log(`\nwrote ${repoRelative(file)}; verdicts appended to ${repoRelative(verdictsPath("f1"))}`);
   } finally {
     await browser.close();
   }

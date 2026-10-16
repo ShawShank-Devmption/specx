@@ -19,8 +19,8 @@ All request/response bodies are JSON. Errors: `{"error": {"code": string, "messa
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| `POST` | `/sessions/{id}/invoke` | `{tool_id, args, source, post_observe_ms?:int (default 1500), screenshot?:bool}` | **`Verdict`** (contracts/verdict.schema.json), `anomaly=null`. |
-| `POST` | `/sessions/{id}/invoke_concurrent` | `{calls:[{tool_id,args}], source, post_observe_ms?}` | `{concurrency_group, verdicts: Verdict[]}` — all calls fired with `Promise.all` in the same page (two pages if `separate_pages:true`). Each verdict has `mode:"concurrent"`. The sandbox additionally evaluates the `at_most_once` invariant over the group. |
+| `POST` | `/sessions/{id}/invoke` | `{tool_id, args, source, post_observe_ms?:int (default 1500), screenshot?:bool, page?:string}` | **`Verdict`** (contracts/verdict.schema.json), `anomaly=null`. |
+| `POST` | `/sessions/{id}/invoke_concurrent` | `{calls:[{tool_id,args,page?}], source, post_observe_ms?}` | `{concurrency_group, verdicts: Verdict[]}` — all calls fired with `Promise.all` in the same page (two pages if `separate_pages:true`). Each verdict has `mode:"concurrent"`. The sandbox additionally evaluates the `at_most_once` invariant over the group. |
 | `POST` | `/sessions/{id}/replay` | `{run_id}` | `Verdict` with `mode:"replay"` — resets to the recorded pre-state and re-invokes with identical args. Used for the Gate-1 determinism check. |
 | `GET` | `/sessions/{id}/events?since_seq=N` | – | `{events: EventRecord[]}` — the full stream for the session, including `phase:"post"` events after the last invoke. B's S6 windower polls this. |
 | `GET` | `/sessions/{id}/state` | – | `{url, db: {table: {count, rows}}, storage: {local:{}, session:{}}, aria: string, screenshot_b64?: string}` |
@@ -30,6 +30,8 @@ All request/response bodies are JSON. Errors: `{"error": {"code": string, "messa
 | `POST` | `/sessions/{id}/inject_leak` | `{kind:"delayed_post"|"storage_write"|"third_party_fetch"|"background_poll", delay_ms:int}` | `{ok:true}` — proxies to the seed app's `/__test/leak`; the next tool invocation will exhibit the leak during `phase:"post"`. Used by S6 experiments. |
 
 ## Semantics the implementer must honour
+
+0. **Page-scoped (`ui`) tools**: before a run the sandbox opens the tool's page in the run's tab — `page` if given, else the tool's `page` pattern with `:id` filled from the last row of the matching table, else `page_example`. Navigation happens before the run starts, so it is not part of the run's events. API tools run on whatever page is open.
 
 1. **Verdict is computed inside the sandbox**, not by the caller: evaluate preconditions on `dbBefore` → run the handler (always, even if a precondition failed — what a tool does with bad input is evidence) → wait `post_observe_ms` → evaluate the remaining clauses → compute `effect_diff` from (db snapshot before/after, network events, mutation count, storage events, audit rows since).
 2. **Which clauses are evaluated.** Single/replay mode: preconditions + invariants always; postconditions only when every precondition passed and the handler did not throw. Concurrent mode: preconditions + invariants only, because per-call postconditions cannot be attributed inside a group. Skipped clauses are omitted from `clause_results`.

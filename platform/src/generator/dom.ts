@@ -147,7 +147,19 @@ export async function crawl(session: Session, opts: { settleMs?: number } = {}):
         const requests = capturing;
         capturing = null;
         if (!clicked) continue;
-        triggers.set(id, { page: pattern, selector: selectorOf(b), role: b.role, name: b.name, ...(b.testid ? { testid: b.testid } : {}), inputs, requests });
+        const status = (await page.locator("[role=status]").first().innerText({ timeout: 500 }).catch(() => "")).trim();
+        triggers.set(id, {
+          page: pattern,
+          pagePath: path,
+          selector: selectorOf(b),
+          role: b.role,
+          name: b.name,
+          ...(b.testid ? { testid: b.testid } : {}),
+          data: b.data ?? {},
+          inputs,
+          requests,
+          after: { url: new URL(page.url()).pathname, status },
+        });
         const createsState = requests.some((r) => r.method === "POST" && manifest.approved_endpoints.some((e) => e.method === "POST" && e.path === r.pattern && e.risk_level === "write"));
         if (createsState && !setup.some((s) => s.key === keyOf(b))) newSetup.push({ path, key: keyOf(b) });
       }

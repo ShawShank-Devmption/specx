@@ -29,7 +29,9 @@ function category(clause: Clause, role: Role): ViolationCategory {
   }
 }
 
-async function evalAll(clauses: Clause[], role: Role, ctx: RunContext): Promise<{ clause: Clause; role: Role; result: ClauseResult }[]> {
+export type Evaluated = { clause: Clause; role: Role; result: ClauseResult };
+
+async function evalAll(clauses: Clause[], role: Role, ctx: RunContext): Promise<Evaluated[]> {
   const out = [];
   for (const clause of clauses) {
     const o = await check(clause, ctx, role === "pre" ? "pre" : "post");
@@ -42,8 +44,13 @@ async function evalAll(clauses: Clause[], role: Role, ctx: RunContext): Promise<
   return out;
 }
 
-export async function evaluateRun(contract: ToolContract, ctx: RunContext, opts: { mode: Mode; handlerError: string | null }): Promise<Evaluation> {
-  const pre = await evalAll(contract.preconditions, "pre", ctx);
+/** Preconditions are judged against the state before the handler runs: dbBefore and the page as it was. */
+export function evaluatePreconditions(contract: ToolContract, ctx: RunContext): Promise<Evaluated[]> {
+  return evalAll(contract.preconditions, "pre", ctx);
+}
+
+export async function evaluateRun(contract: ToolContract, ctx: RunContext, opts: { mode: Mode; handlerError: string | null; pre?: Evaluated[] }): Promise<Evaluation> {
+  const pre = opts.pre ?? (await evaluatePreconditions(contract, ctx));
   const runPost = opts.mode !== "concurrent" && opts.handlerError === null && pre.every((p) => p.result.passed === true);
   const post = runPost ? await evalAll(contract.postconditions, "post", ctx) : [];
   const inv = await evalAll(contract.invariants, "inv", ctx);

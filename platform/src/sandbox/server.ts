@@ -28,9 +28,10 @@ const Body = {
     source: z.enum(SOURCES),
     post_observe_ms: z.number().int().min(0).max(10_000).optional(),
     screenshot: z.boolean().optional(),
+    page: z.string().startsWith("/").optional(),
   }),
   concurrent: z.object({
-    calls: z.array(z.object({ tool_id: z.string(), args })).min(1).max(8),
+    calls: z.array(z.object({ tool_id: z.string(), args, page: z.string().startsWith("/").optional() })).min(1).max(8),
     source: z.enum(SOURCES),
     post_observe_ms: z.number().int().min(0).max(10_000).optional(),
   }),
@@ -108,7 +109,7 @@ export function createSandbox(opts: { manifests: AppManifest[] }): Sandbox {
 
   app.post("/sessions/:id/invoke", async (req, res) => {
     const b = Body.invoke.parse(req.body);
-    res.json(await session(req).invoke(b.tool_id, b.args, { source: b.source, ...(b.post_observe_ms === undefined ? {} : { postObserveMs: b.post_observe_ms }), screenshot: b.screenshot ?? false }));
+    res.json(await session(req).invoke(b.tool_id, b.args, { source: b.source, ...(b.post_observe_ms === undefined ? {} : { postObserveMs: b.post_observe_ms }), screenshot: b.screenshot ?? false, ...(b.page ? { page: b.page } : {}) }));
   });
 
   app.post("/sessions/:id/invoke_concurrent", async (req, res) => {

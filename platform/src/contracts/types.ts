@@ -58,6 +58,10 @@ export interface ToolDefinition {
     code: string;
     http?: { method: HttpMethod; path_template: string };
     selectors?: string[];
+    /** WebMCP page scope: pattern like /products/:id, or "*" for every page. */
+    page?: string;
+    /** Concrete page the crawler saw the control on, e.g. /products/1. */
+    page_example?: string;
   };
   risk_level: RiskLevel;
   atomic: true;

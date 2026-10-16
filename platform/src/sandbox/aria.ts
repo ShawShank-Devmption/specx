@@ -20,6 +20,8 @@ export interface Item {
   value?: string;
   options?: string[];
   href?: string;
+  /** data-* attributes other than data-testid, e.g. data-product-id on a per-row button. */
+  data?: Record<string, string>;
 }
 
 /** Visible interactive elements, numbered e1..eN; also registers the refs used by refHandle(). */
@@ -41,6 +43,8 @@ export async function interactiveItems(page: Page): Promise<Item[]> {
       const item: Item = { ref, role, name, tag };
       const testid = el.getAttribute("data-testid");
       if (testid) item.testid = testid;
+      const data = Object.fromEntries(el.getAttributeNames().filter((n) => n.startsWith("data-") && n !== "data-testid").map((n) => [n, el.getAttribute(n) ?? ""]));
+      if (Object.keys(data).length) item.data = data;
       if (tag === "input" || tag === "textarea" || tag === "select") {
         item.value = (el as HTMLInputElement).value;
         const field = el.getAttribute("name");
