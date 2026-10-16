@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "specx-shop": {
+      "command": "platform/node_modules/.bin/tsx",
+      "args": ["platform/src/mcp/server.ts", "--app", "shop"],
+      "env": { "SPECX_LOG": "warn" }
+    },
+    "specx-admin": {
+      "command": "platform/node_modules/.bin/tsx",
+      "args": ["platform/src/mcp/server.ts", "--app", "admin"],
+      "env": { "SPECX_LOG": "warn" }
+    }
+  }
+}

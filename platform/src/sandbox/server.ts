@@ -16,7 +16,7 @@ import { SEED_APPS_DIR } from "../paths.js";
 import { SandboxError } from "./errors.js";
 import { Session, type DomAction } from "./session.js";
 
-const SOURCES = ["f1", "s1", "s1_random", "s1_coverage", "s6_approved", "s6_inject", "f2", "f4", "fixture"] as const;
+const SOURCES = ["f1", "s1", "s1_random", "s1_coverage", "s6_approved", "s6_inject", "f2", "f4", "fixture", "mcp"] as const;
 const args = z.record(z.unknown());
 const Body = {
   createSession: z.object({ app: z.string(), seed: z.number().int().optional(), leak: z.object({ kind: z.string(), delay_ms: z.number().int().min(0) }).optional() }),

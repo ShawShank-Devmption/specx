@@ -181,7 +181,7 @@ export interface Violation {
 
 export type VerdictStatus = "pass" | "fail" | "error" | "unverifiable";
 export type Mode = "single" | "concurrent" | "replay";
-export type Source = "f1" | "s1" | "s1_random" | "s1_coverage" | "s6_approved" | "s6_inject" | "f2" | "f4" | "fixture";
+export type Source = "f1" | "s1" | "s1_random" | "s1_coverage" | "s6_approved" | "s6_inject" | "f2" | "f4" | "fixture" | "mcp";
 
 export interface Verdict {
   run_id: string;

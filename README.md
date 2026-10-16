@@ -52,6 +52,23 @@ What the platform stages produce today (template namer, 3 runs per tool):
 | shop | 7 | 6 | `place_order` (checkout race under concurrent calls) | 7/7 |
 | admin | 7 | 5 | `set_role` (no audit row), `delete_user` (hidden cascade deletes notes) | 7/7 |
 
+## Connect your Claude agent to the verified tools
+
+Only tools that passed contract verification are exposed; quarantined tools are refused with the reason. Every call runs in a sandbox session, so contracts still apply, and the reply carries the output plus `SpecX contract check: pass|fail`.
+
+**Prerequisites:** `make apps` running, and `make generate verify` done. Add `make s1 quarantine` to drop tools that fuzzing broke.
+
+**MCP (Claude Code, Claude Desktop, any MCP client).** Opening Claude Code in this repo offers `specx-shop` and `specx-admin` from `.mcp.json`; approve them once. To register them elsewhere:
+
+```bash
+claude mcp add specx-shop -- "$PWD/platform/node_modules/.bin/tsx" "$PWD/platform/src/mcp/server.ts" --app shop
+claude mcp add specx-admin -- "$PWD/platform/node_modules/.bin/tsx" "$PWD/platform/src/mcp/server.ts" --app admin
+```
+
+For Claude Desktop, add the same command and arguments, as absolute paths, under `mcpServers` in its config file.
+
+**WebMCP (agents that browse the site).** `make export` writes `results/webmcp/<app>.webmcp.js` and a manifest. Each app serves the script at `/webmcp.js` and registers the tools through `document.modelContext.registerTool`, with a fallback to `navigator.modelContext` for older drafts and the MCP-B extension.
+
 ## Results
 
 The C10 reporter and dashboard are implemented. Real-browser template generation and F1 verification now populate Tables 1–2: Shop has 6 verified / 1 quarantined tool, Admin has 5 verified / 2 quarantined, and replay checks pass 7/7 per app. Model-driven benchmark outputs and B's full safety-stage metrics are not yet available; `make report` generates an **incomplete** report and exits **2**. `MISSING` is unknown, not a measured zero. See the [no-paid-API checkpoint](docs/FREE_INTEGRATION.md) for scope and reproducible commands.
