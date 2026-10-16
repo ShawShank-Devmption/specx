@@ -84,6 +84,9 @@ report: ## stats + results/final/REPORT.md + results/final/numbers.json (dashboa
 
 demo: generate verify s6 s1 quarantine graph s2 baseline optimise evaluate report ## full pipeline (apps + sandbox must be running)
 
+live-demo: ## narrated demo: pipeline outputs, a Claude-style agent over MCP, live defect reproduction (apps + sandbox running)
+	node platform/scripts/live-demo.mjs
+
 dashboard: ## serve the React dashboard on :5173
 	cd dashboard && npm run dev
 
