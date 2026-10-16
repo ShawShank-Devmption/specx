@@ -61,6 +61,12 @@ def _run(
             first_high = step_number
         if terminated or truncated:
             env.reset()
+        if step_number % 100 == 0:
+            print(
+                f"{env.app} {method} seed={env.seed_value} step={step_number} "
+                f"signatures={len(signatures)}",
+                flush=True,
+            )
 
     env.close()
     return EpisodeLog(

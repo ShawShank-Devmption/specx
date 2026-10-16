@@ -178,6 +178,23 @@ def test_default_heldout_design_has_fifty_paired_seeded_jobs() -> None:
     assert {job.seed for job in first} == set(range(5))
 
 
+def test_jobs_only_expose_tools_with_contracts(configured: Path) -> None:
+    del configured
+    jobs = _jobs(
+        ["shop"],
+        [Condition.generated],
+        1,
+        0,
+        "train",
+        ["shop.t02"],
+        None,
+    )
+
+    assert jobs[0].contracts is not None
+    contract_ids = {contract["tool_id"] for contract in jobs[0].contracts}
+    assert {tool["tool_id"] for tool in jobs[0].tools} <= contract_ids
+
+
 def test_eight_parallel_workers_reuse_sessions_and_serialize_output(configured: Path) -> None:
     barrier, lock = Barrier(8), Lock()
     threads: set[int] = set()

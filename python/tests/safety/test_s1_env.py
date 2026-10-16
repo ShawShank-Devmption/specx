@@ -160,3 +160,10 @@ def test_random_baseline_finds_race_and_is_seeded() -> None:
 
     assert len(first.signatures) >= 1
     assert first == second
+
+
+def test_random_baseline_reports_progress_every_100_steps(capsys) -> None:
+    run_random(make_env(seed=5), 100, np.random.default_rng(5))
+
+    output = capsys.readouterr().out
+    assert "shop random seed=5 step=100 signatures=" in output

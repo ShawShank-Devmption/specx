@@ -89,6 +89,8 @@ def _jobs(
                     raise ValueError(f"Expected contract array for {name}")
                 for contract in contracts:
                     validate("contract", contract)
+                contract_tool_ids = {contract["tool_id"] for contract in contracts}
+                tools = [tool for tool in tools if tool["tool_id"] in contract_tool_ids]
             jobs.extend(
                 TrialJob(
                     task=task,
