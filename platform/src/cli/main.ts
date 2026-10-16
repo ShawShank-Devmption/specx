@@ -4,10 +4,12 @@
  *   verify     --app <app> [--runs 3]
  *   graph      --app <app>
  *   quarantine --app <app> [--from s1,s1_random,s1_coverage]
+ *   export     --app <app>
  *   versions
  */
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
+import { exportCommand } from "./export.js";
 import { generateCommand } from "./generate.js";
 import { graphCommand } from "./graph.js";
 import { versionsCommand } from "./versions.js";
@@ -20,6 +22,7 @@ commands:
               --namer template|llm   (default template; llm needs ANTHROPIC_API_KEY)
   verify      F1: run every tool in the sandbox -> results/verdicts/f1.jsonl, tool status verified|quarantined
               --runs N (default 3)  --observe MS post-observe window (default 1000)
+  export      verified tools -> results/webmcp/<app>.webmcp.js (+ .json); the app serves it at /webmcp.js
   graph       typed workflow graph -> results/graphs/<app>.graph.json (keeps S2's gnn edges)
   versions    record node, playwright and chromium versions -> results/final/platform_versions.json (no --app)
   quarantine  fold later evidence into tool status
@@ -55,6 +58,9 @@ export async function main(argv: string[]): Promise<number> {
       return 0;
     case "verify":
       await verifyCommand(values.app, Number(values.runs), Number(values.observe));
+      return 0;
+    case "export":
+      exportCommand(values.app);
       return 0;
     case "graph":
       graphCommand(values.app);

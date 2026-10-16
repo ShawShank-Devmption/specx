@@ -1,4 +1,5 @@
 // Express app factory shared by seed apps: JSON body, sessions, tenancy, leak middleware, static assets, hooks.
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
@@ -7,9 +8,18 @@ import { page } from "./layout.js";
 import { createLeakState, testHooks } from "./testhooks.js";
 
 const LIB_PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), "public");
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+
+/** Where `specx export` writes this app's WebMCP script (the file a developer would ship with the site). */
+function webmcpScript(app) {
+  const dir = process.env.SPECX_RESULTS_DIR;
+  const results = !dir ? path.join(REPO_ROOT, "results") : path.isAbsolute(dir) ? dir : path.join(REPO_ROOT, dir);
+  return path.join(results, "webmcp", `${app}.webmcp.js`);
+}
 
 /**
  * @param {object} o
+ * @param {string} o.app app id (also names its WebMCP export)
  * @param {string} o.appDir directory holding schema.sql, seed.sql, public/
  * @param {string} o.cookieName session cookie name
  * @param {string[]} o.tables tables exposed by /__test/db
@@ -19,7 +29,7 @@ const LIB_PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), "publ
  * @param {(db, state) => void} o.applyState task setup applier
  * @param {(app, h) => void} o.routes registers the app's pages and API routes
  */
-export function buildApp({ appDir, cookieName, tables, pollPath, home, nav, applyState, routes }) {
+export function buildApp({ app: appId, appDir, cookieName, tables, pollPath, home, nav, applyState, routes }) {
   const store = createTenantStore(appDir);
   const auth = createAuth(cookieName);
   const leaks = createLeakState(pollPath);
@@ -68,6 +78,12 @@ export function buildApp({ appDir, cookieName, tables, pollPath, home, nav, appl
     res.redirect("/login");
   });
   app.get("/", (req, res) => res.redirect(req.user ? home : "/login"));
+  app.get("/webmcp.js", (_req, res) => {
+    const file = webmcpScript(appId);
+    res.type("application/javascript");
+    if (fs.existsSync(file)) res.sendFile(file);
+    else res.send("/* no SpecX WebMCP export for this app yet: run `make export` */\n");
+  });
 
   routes(app, { requireAuth, audit, page: (o) => page({ nav, ...o }) });
   app.use(jsonErrors);

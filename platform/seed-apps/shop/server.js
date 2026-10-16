@@ -138,6 +138,7 @@ function routes(app, { requireAuth, audit, page }) {
 
 export function createApp() {
   return buildApp({
+    app: "shop",
     appDir: APP_DIR,
     cookieName: "shop_sid",
     tables: ["products", "users", "cart_items", "orders", "order_items", "audit_log"],

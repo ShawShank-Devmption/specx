@@ -12,5 +12,5 @@ export function page({ title, nav, user, body }) {
 <link rel="stylesheet" href="/style.css"></head>
 <body><header><nav aria-label="Main">${links}</nav>${menu}</header>
 <main><h1>${escapeHtml(title)}</h1>${body}<p role="status" data-testid="status" aria-live="polite"></p></main>
-<script src="/telemetry.js"></script><script src="/app.js"></script></body></html>`;
+<script src="/telemetry.js"></script><script src="/app.js"></script><script src="/webmcp.js" defer></script></body></html>`;
 }
