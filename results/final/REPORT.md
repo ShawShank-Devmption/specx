@@ -1,6 +1,6 @@
 # SpecX results
 
-Generated: 2026-10-15T19:37:31.173134+00:00 · Git: c9f3d02039727e77b428146afa01f97f4e8fc30e
+Generated: 2026-10-16T15:48:22.180481+00:00 · Git: 085a31e87ac1608c88027c282e6f28ff7601068c
 
 Status: INCOMPLETE · Evidence: unknown
 
@@ -19,40 +19,194 @@ Bootstrap CIs: 2,000 paired resamples, local seed 0. Holm correction uses one fa
 
 ## Table 2 - Verification
 
-| app   | verified   | quarantined   | unverifiable   | generated   | quarantine_reasons                     | replay_determinism_rate   | replay_n   | replay_total   | replay_unmatched   |
-|:------|:-----------|:--------------|:---------------|:------------|:---------------------------------------|:--------------------------|:-----------|:---------------|:-------------------|
-| admin | 5          | 2             | 0              | 0           | {"postcondition": 1, "side_effect": 1} | 1.0                       | 7          | 7              | 0                  |
-| shop  | 6          | 1             | 0              | 0           | {"race": 1}                            | 1.0                       | 7          | 7              | 0                  |
+| app   | verified   | quarantined   | unverifiable   | generated   | quarantine_reasons                                                                                         | replay_determinism_rate   | replay_n   | replay_total   | replay_unmatched   |
+|:------|:-----------|:--------------|:---------------|:------------|:-----------------------------------------------------------------------------------------------------------|:--------------------------|:-----------|:---------------|:-------------------|
+| admin | 5          | 2             | 0              | 0           | {"postcondition": 1, "precondition": 2, "side_effect": 1}                                                  | 1.0                       | 7          | 7              | 0                  |
+| shop  | 4          | 3             | 0              | 0           | {"precondition": 3, "race": 1, "side_effect": 2, "storage": 1, "third_party": 1, "unapproved_endpoint": 1} | 1.0                       | 7          | 7              | 0                  |
 
 ## Table 3 - S6 anomaly detection
 
-| status          |
-|:----------------|
-| No observations |
-
-| status                                                                |
-|:----------------------------------------------------------------------|
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/s6/metrics.json |
+| metric                                    | value                              | n_context   |
+|:------------------------------------------|:-----------------------------------|:------------|
+| benign.fpr_both                           | 0.5                                | n=100       |
+| benign.fpr_if                             | 0.5                                | n=100       |
+| benign.fpr_lstm                           | 0.0                                | n=100       |
+| benign.n                                  | 100                                | n=100       |
+| contract_only_detection.background_poll   | 0.0                                | n_train=302 |
+| contract_only_detection.delayed_post      | 1.0                                | n_train=302 |
+| contract_only_detection.storage_write     | 1.0                                | n_train=302 |
+| contract_only_detection.third_party_fetch | 1.0                                | n_train=302 |
+| n_attempted                               | 352                                | n_train=302 |
+| n_excluded                                | 50                                 | n_train=302 |
+| n_train                                   | 302                                | n_train=302 |
+| per_kind.background_poll.det_both         | 1.0                                | n=25        |
+| per_kind.background_poll.det_if           | 0.96                               | n=25        |
+| per_kind.background_poll.det_lstm         | 1.0                                | n=25        |
+| per_kind.background_poll.n                | 25                                 | n=25        |
+| per_kind.delayed_post.det_both            | 1.0                                | n=25        |
+| per_kind.delayed_post.det_if              | 0.52                               | n=25        |
+| per_kind.delayed_post.det_lstm            | 1.0                                | n=25        |
+| per_kind.delayed_post.n                   | 25                                 | n=25        |
+| per_kind.storage_write.det_both           | 0.52                               | n=25        |
+| per_kind.storage_write.det_if             | 0.52                               | n=25        |
+| per_kind.storage_write.det_lstm           | 0.0                                | n=25        |
+| per_kind.storage_write.n                  | 25                                 | n=25        |
+| per_kind.third_party_fetch.det_both       | 0.52                               | n=25        |
+| per_kind.third_party_fetch.det_if         | 0.52                               | n=25        |
+| per_kind.third_party_fetch.det_lstm       | 0.0                                | n=25        |
+| per_kind.third_party_fetch.n              | 25                                 | n=25        |
+| seq_len                                   | 8                                  | n_train=302 |
+| split.test                                | fresh injected and benign sessions | n_train=302 |
+| split.train                               | approved collection sessions       | n_train=302 |
+| split.unit                                | run_id                             | n_train=302 |
+| thresholds.iforest                        | 0.7159318476151784                 | n_train=302 |
+| thresholds.lstm                           | 0.2846522331237793                 | n_train=302 |
 
 ## Table 4 - S1 adversarial fuzzing
 
-| status          |
-|:----------------|
-| No observations |
-
-| status                                                                |
-|:----------------------------------------------------------------------|
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/s1/metrics.json |
+| metric                                                       | value                                                                                            | n_context         |
+|:-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|:------------------|
+| by_app_method.admin.coverage.n                               | 1                                                                                                | n=1               |
+| by_app_method.admin.coverage.severity_mix.high               | 61                                                                                               | n=1               |
+| by_app_method.admin.coverage.severity_mix.low                | 0                                                                                                | n=1               |
+| by_app_method.admin.coverage.severity_mix.medium             | 25                                                                                               | n=1               |
+| by_app_method.admin.coverage.ttf_high.mean                   | 12.0                                                                                             | n=1               |
+| by_app_method.admin.coverage.ttf_high.sd                     | 0.0                                                                                              | n=1               |
+| by_app_method.admin.coverage.ttfv.mean                       | 3.0                                                                                              | n=1               |
+| by_app_method.admin.coverage.ttfv.sd                         | 0.0                                                                                              | n=1               |
+| by_app_method.admin.coverage.unique_signatures_per_1000.mean | 35.0                                                                                             | n=1               |
+| by_app_method.admin.coverage.unique_signatures_per_1000.sd   | 0.0                                                                                              | n=1               |
+| by_app_method.admin.ppo.n                                    | 1                                                                                                | n=1               |
+| by_app_method.admin.ppo.severity_mix.high                    | 54                                                                                               | n=1               |
+| by_app_method.admin.ppo.severity_mix.low                     | 0                                                                                                | n=1               |
+| by_app_method.admin.ppo.severity_mix.medium                  | 29                                                                                               | n=1               |
+| by_app_method.admin.ppo.ttf_high.mean                        | 3.0                                                                                              | n=1               |
+| by_app_method.admin.ppo.ttf_high.sd                          | 0.0                                                                                              | n=1               |
+| by_app_method.admin.ppo.ttfv.mean                            | 3.0                                                                                              | n=1               |
+| by_app_method.admin.ppo.ttfv.sd                              | 0.0                                                                                              | n=1               |
+| by_app_method.admin.ppo.unique_signatures_per_1000.mean      | 35.0                                                                                             | n=1               |
+| by_app_method.admin.ppo.unique_signatures_per_1000.sd        | 0.0                                                                                              | n=1               |
+| by_app_method.admin.random.n                                 | 1                                                                                                | n=1               |
+| by_app_method.admin.random.severity_mix.high                 | 61                                                                                               | n=1               |
+| by_app_method.admin.random.severity_mix.low                  | 0                                                                                                | n=1               |
+| by_app_method.admin.random.severity_mix.medium               | 22                                                                                               | n=1               |
+| by_app_method.admin.random.ttf_high.mean                     | 12.0                                                                                             | n=1               |
+| by_app_method.admin.random.ttf_high.sd                       | 0.0                                                                                              | n=1               |
+| by_app_method.admin.random.ttfv.mean                         | 9.0                                                                                              | n=1               |
+| by_app_method.admin.random.ttfv.sd                           | 0.0                                                                                              | n=1               |
+| by_app_method.admin.random.unique_signatures_per_1000.mean   | 40.0                                                                                             | n=1               |
+| by_app_method.admin.random.unique_signatures_per_1000.sd     | 0.0                                                                                              | n=1               |
+| by_app_method.shop.coverage.n                                | 1                                                                                                | n=1               |
+| by_app_method.shop.coverage.severity_mix.high                | 39                                                                                               | n=1               |
+| by_app_method.shop.coverage.severity_mix.low                 | 0                                                                                                | n=1               |
+| by_app_method.shop.coverage.severity_mix.medium              | 52                                                                                               | n=1               |
+| by_app_method.shop.coverage.ttf_high.mean                    | 6.0                                                                                              | n=1               |
+| by_app_method.shop.coverage.ttf_high.sd                      | 0.0                                                                                              | n=1               |
+| by_app_method.shop.coverage.ttfv.mean                        | 3.0                                                                                              | n=1               |
+| by_app_method.shop.coverage.ttfv.sd                          | 0.0                                                                                              | n=1               |
+| by_app_method.shop.coverage.unique_signatures_per_1000.mean  | 30.0                                                                                             | n=1               |
+| by_app_method.shop.coverage.unique_signatures_per_1000.sd    | 0.0                                                                                              | n=1               |
+| by_app_method.shop.ppo.n                                     | 1                                                                                                | n=1               |
+| by_app_method.shop.ppo.severity_mix.high                     | 45                                                                                               | n=1               |
+| by_app_method.shop.ppo.severity_mix.low                      | 0                                                                                                | n=1               |
+| by_app_method.shop.ppo.severity_mix.medium                   | 57                                                                                               | n=1               |
+| by_app_method.shop.ppo.ttf_high.mean                         | 11.0                                                                                             | n=1               |
+| by_app_method.shop.ppo.ttf_high.sd                           | 0.0                                                                                              | n=1               |
+| by_app_method.shop.ppo.ttfv.mean                             | 1.0                                                                                              | n=1               |
+| by_app_method.shop.ppo.ttfv.sd                               | 0.0                                                                                              | n=1               |
+| by_app_method.shop.ppo.unique_signatures_per_1000.mean       | 35.0                                                                                             | n=1               |
+| by_app_method.shop.ppo.unique_signatures_per_1000.sd         | 0.0                                                                                              | n=1               |
+| by_app_method.shop.random.n                                  | 1                                                                                                | n=1               |
+| by_app_method.shop.random.severity_mix.high                  | 36                                                                                               | n=1               |
+| by_app_method.shop.random.severity_mix.low                   | 0                                                                                                | n=1               |
+| by_app_method.shop.random.severity_mix.medium                | 57                                                                                               | n=1               |
+| by_app_method.shop.random.ttf_high.mean                      | 1.0                                                                                              | n=1               |
+| by_app_method.shop.random.ttf_high.sd                        | 0.0                                                                                              | n=1               |
+| by_app_method.shop.random.ttfv.mean                          | 1.0                                                                                              | n=1               |
+| by_app_method.shop.random.ttfv.sd                            | 0.0                                                                                              | n=1               |
+| by_app_method.shop.random.unique_signatures_per_1000.mean    | 30.0                                                                                             | n=1               |
+| by_app_method.shop.random.unique_signatures_per_1000.sd      | 0.0                                                                                              | n=1               |
+| method_only.coverage                                         | []                                                                                               | seeds_completed=1 |
+| method_only.ppo                                              | []                                                                                               | seeds_completed=1 |
+| method_only.random[0]                                        | admin.delete_user\|post_frame_notes\|db_delta\|notes inserted=0 updated=0 deleted=1              | seeds_completed=1 |
+| seeds_completed                                              | 1                                                                                                | seeds_completed=1 |
+| signature_union.coverage[0]                                  | admin.deactivate_user\|pre_exists_users\|db_row_exists\|users where id                           | seeds_completed=1 |
+| signature_union.coverage[1]                                  | admin.delete_user\|post_frame_notes\|db_delta\|notes inserted=0 updated=0 deleted=2              | seeds_completed=1 |
+| signature_union.coverage[2]                                  | admin.delete_user\|pre_exists_users\|db_row_exists\|users where id                               | seeds_completed=1 |
+| signature_union.coverage[3]                                  | admin.get_user\|pre_exists_users\|db_row_exists\|users where id                                  | seeds_completed=1 |
+| signature_union.coverage[4]                                  | admin.set_role\|post_audit\|audit_event\|users count=0                                           | seeds_completed=1 |
+| signature_union.coverage[5]                                  | admin.set_role\|pre_exists_users\|db_row_exists\|users where id                                  | seeds_completed=1 |
+| signature_union.coverage[6]                                  | admin.update_user\|pre_exists_users\|db_row_exists\|users where id                               | seeds_completed=1 |
+| signature_union.coverage[7]                                  | shop.add_to_cart\|inv_stock_nonnegative\|db_no_row\|products where stock                         | seeds_completed=1 |
+| signature_union.coverage[8]                                  | shop.add_to_cart\|pre_exists_products\|db_row_exists\|products where id                          | seeds_completed=1 |
+| signature_union.coverage[9]                                  | shop.get_product\|pre_exists_products\|db_row_exists\|products where id                          | seeds_completed=1 |
+| signature_union.coverage[10]                                 | shop.place_order\|inv_at_most_once\|at_most_once\|orders x2                                      | seeds_completed=1 |
+| signature_union.coverage[11]                                 | shop.place_order\|pre_exists_cart_items\|db_row_exists\|cart_items where user_id                 | seeds_completed=1 |
+| signature_union.coverage[12]                                 | shop.remove_from_cart\|pre_exists_cart_items\|db_row_exists\|cart_items where product_id,user_id | seeds_completed=1 |
+| signature_union.ppo[0]                                       | admin.deactivate_user\|pre_exists_users\|db_row_exists\|users where id                           | seeds_completed=1 |
+| signature_union.ppo[1]                                       | admin.delete_user\|post_frame_notes\|db_delta\|notes inserted=0 updated=0 deleted=2              | seeds_completed=1 |
+| signature_union.ppo[2]                                       | admin.delete_user\|pre_exists_users\|db_row_exists\|users where id                               | seeds_completed=1 |
+| signature_union.ppo[3]                                       | admin.get_user\|pre_exists_users\|db_row_exists\|users where id                                  | seeds_completed=1 |
+| signature_union.ppo[4]                                       | admin.set_role\|post_audit\|audit_event\|users count=0                                           | seeds_completed=1 |
+| signature_union.ppo[5]                                       | admin.set_role\|pre_exists_users\|db_row_exists\|users where id                                  | seeds_completed=1 |
+| signature_union.ppo[6]                                       | admin.update_user\|pre_exists_users\|db_row_exists\|users where id                               | seeds_completed=1 |
+| signature_union.ppo[7]                                       | shop.add_to_cart\|inv_stock_nonnegative\|db_no_row\|products where stock                         | seeds_completed=1 |
+| signature_union.ppo[8]                                       | shop.add_to_cart\|pre_exists_products\|db_row_exists\|products where id                          | seeds_completed=1 |
+| signature_union.ppo[9]                                       | shop.get_product\|pre_exists_products\|db_row_exists\|products where id                          | seeds_completed=1 |
+| signature_union.ppo[10]                                      | shop.place_order\|inv_at_most_once\|at_most_once\|orders x2                                      | seeds_completed=1 |
+| signature_union.ppo[11]                                      | shop.place_order\|pre_exists_cart_items\|db_row_exists\|cart_items where user_id                 | seeds_completed=1 |
+| signature_union.ppo[12]                                      | shop.remove_from_cart\|inv_stock_nonnegative\|db_no_row\|products where stock                    | seeds_completed=1 |
+| signature_union.ppo[13]                                      | shop.remove_from_cart\|pre_exists_cart_items\|db_row_exists\|cart_items where product_id,user_id | seeds_completed=1 |
+| signature_union.random[0]                                    | admin.deactivate_user\|pre_exists_users\|db_row_exists\|users where id                           | seeds_completed=1 |
+| signature_union.random[1]                                    | admin.delete_user\|post_frame_notes\|db_delta\|notes inserted=0 updated=0 deleted=1              | seeds_completed=1 |
+| signature_union.random[2]                                    | admin.delete_user\|post_frame_notes\|db_delta\|notes inserted=0 updated=0 deleted=2              | seeds_completed=1 |
+| signature_union.random[3]                                    | admin.delete_user\|pre_exists_users\|db_row_exists\|users where id                               | seeds_completed=1 |
+| signature_union.random[4]                                    | admin.get_user\|pre_exists_users\|db_row_exists\|users where id                                  | seeds_completed=1 |
+| signature_union.random[5]                                    | admin.set_role\|post_audit\|audit_event\|users count=0                                           | seeds_completed=1 |
+| signature_union.random[6]                                    | admin.set_role\|pre_exists_users\|db_row_exists\|users where id                                  | seeds_completed=1 |
+| signature_union.random[7]                                    | admin.update_user\|pre_exists_users\|db_row_exists\|users where id                               | seeds_completed=1 |
+| signature_union.random[8]                                    | shop.add_to_cart\|inv_stock_nonnegative\|db_no_row\|products where stock                         | seeds_completed=1 |
+| signature_union.random[9]                                    | shop.add_to_cart\|pre_exists_products\|db_row_exists\|products where id                          | seeds_completed=1 |
+| signature_union.random[10]                                   | shop.get_product\|pre_exists_products\|db_row_exists\|products where id                          | seeds_completed=1 |
+| signature_union.random[11]                                   | shop.place_order\|pre_exists_cart_items\|db_row_exists\|cart_items where user_id                 | seeds_completed=1 |
+| signature_union.random[12]                                   | shop.remove_from_cart\|inv_stock_nonnegative\|db_no_row\|products where stock                    | seeds_completed=1 |
+| signature_union.random[13]                                   | shop.remove_from_cart\|pre_exists_cart_items\|db_row_exists\|cart_items where product_id,user_id | seeds_completed=1 |
 
 ## Table 5 - S2 risk prediction
 
-| status          |
-|:----------------|
-| No observations |
-
-| status                                                                |
-|:----------------------------------------------------------------------|
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/s2/metrics.json |
+| metric                   | value                 | n_context                |
+|:-------------------------|:----------------------|:-------------------------|
+| link.gcn.auc             | 0.5                   | n_train=1221, n_test=773 |
+| link.gcn.f1              | 0.6666666666666666    | n_train=1221, n_test=773 |
+| link.gcn.p               | 0.5                   | n_train=1221, n_test=773 |
+| link.gcn.r               | 1.0                   | n_train=1221, n_test=773 |
+| link.rule.p              | 1.0                   | n_train=1221, n_test=773 |
+| link.rule.r              | 0.8518518518518517    | n_train=1221, n_test=773 |
+| n_test                   | 773                   | n_train=1221, n_test=773 |
+| n_train                  | 1221                  | n_train=1221, n_test=773 |
+| path.gcn.auc             | 0.7149472319445392    | n_train=1221, n_test=773 |
+| path.gcn.f1              | 0.5407696537851366    | n_train=1221, n_test=773 |
+| path.gcn.p               | 0.6563788421852937    | n_train=1221, n_test=773 |
+| path.gcn.r               | 0.4606998601833152    | n_train=1221, n_test=773 |
+| path.mlp.auc             | 0.8561367563131785    | n_train=1221, n_test=773 |
+| path.mlp.f1              | 0.6111779987746181    | n_train=1221, n_test=773 |
+| path.mlp.p               | 0.6644229168747295    | n_train=1221, n_test=773 |
+| path.mlp.r               | 0.5714914519481864    | n_train=1221, n_test=773 |
+| recovered_edges[0].dst   | shop.remove_from_cart | n_train=1221, n_test=773 |
+| recovered_edges[0].field | product_id            | n_train=1221, n_test=773 |
+| recovered_edges[0].src   | shop.list_products    | n_train=1221, n_test=773 |
+| recovered_edges[1].dst   | shop.add_to_cart      | n_train=1221, n_test=773 |
+| recovered_edges[1].field | product_id            | n_train=1221, n_test=773 |
+| recovered_edges[1].src   | shop.list_products    | n_train=1221, n_test=773 |
+| recovered_edges[2].dst   | shop.add_to_cart      | n_train=1221, n_test=773 |
+| recovered_edges[2].field | product_id            | n_train=1221, n_test=773 |
+| recovered_edges[2].src   | shop.get_product      | n_train=1221, n_test=773 |
+| recovered_edges[3].dst   | shop.remove_from_cart | n_train=1221, n_test=773 |
+| recovered_edges[3].field | product_id            | n_train=1221, n_test=773 |
+| recovered_edges[3].src   | shop.get_product      | n_train=1221, n_test=773 |
+| recovered_edges[4].dst   | shop.get_product      | n_train=1221, n_test=773 |
+| recovered_edges[4].field | id                    | n_train=1221, n_test=773 |
+| recovered_edges[4].src   | shop.view_cart        | n_train=1221, n_test=773 |
 
 ## Table 6 - F2/S4 optimisation
 
@@ -60,16 +214,16 @@ Bootstrap CIs: 2,000 paired resamples, local seed 0. Holm correction uses one fa
 |:----------------|
 | No observations |
 
-| status                                                                                                              |
-|:--------------------------------------------------------------------------------------------------------------------|
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json                                               |
-| MISSING: completed /Users/ananyaganesan/specx-shawshank/results/f2/run.json                                         |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json shop/text_trace with training n>0             |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json shop/text_structured with training n>0        |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json shop/multimodal_structured with training n>0  |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json admin/text_trace with training n>0            |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json admin/text_structured with training n>0       |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/f2/metrics.json admin/multimodal_structured with training n>0 |
+| status                                                                                                                       |
+|:-----------------------------------------------------------------------------------------------------------------------------|
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/f2/metrics.json                                               |
+| MISSING: completed /Users/shashankbhat/Projects/ai_project/specx/results/f2/run.json                                         |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/f2/metrics.json shop/text_trace with training n>0             |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/f2/metrics.json shop/text_structured with training n>0        |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/f2/metrics.json shop/multimodal_structured with training n>0  |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/f2/metrics.json admin/text_trace with training n>0            |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/f2/metrics.json admin/text_structured with training n>0       |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/f2/metrics.json admin/multimodal_structured with training n>0 |
 
 ## Table 7 - F4 readiness
 
@@ -84,41 +238,41 @@ Bootstrap CIs: 2,000 paired resamples, local seed 0. Holm correction uses one fa
 | shop  | optimised   | 0   | MISSING              | MISSING          | MISSING           | MISSING             | unknown            | unknown             |
 | admin | optimised   | 0   | MISSING              | MISSING          | MISSING           | MISSING             | unknown            | unknown             |
 
-| status                                                                                                                                     |
-|:-------------------------------------------------------------------------------------------------------------------------------------------|
-| MISSING: completed /Users/ananyaganesan/specx-shawshank/results/evalx/run.json                                                             |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/raw_dom.jsonl                                                                 |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/raw_dom.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)    |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/raw_dom.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)   |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl                                                               |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)  |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25) |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl                                                                |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)   |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)  |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/optimised.jsonl                                                               |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/optimised.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)  |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/optimised.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25) |
-| MISSING: paired success comparison shop: raw_dom -> generated                                                                              |
-| MISSING: paired success comparison shop: generated -> verified                                                                             |
-| MISSING: paired success comparison shop: verified -> optimised                                                                             |
-| MISSING: paired success comparison admin: raw_dom -> generated                                                                             |
-| MISSING: paired success comparison admin: generated -> verified                                                                            |
-| MISSING: paired success comparison admin: verified -> optimised                                                                            |
-| MISSING: paired steps comparison shop: raw_dom -> generated                                                                                |
-| MISSING: paired steps comparison shop: generated -> verified                                                                               |
-| MISSING: paired steps comparison shop: verified -> optimised                                                                               |
-| MISSING: paired steps comparison admin: raw_dom -> generated                                                                               |
-| MISSING: paired steps comparison admin: generated -> verified                                                                              |
-| MISSING: paired steps comparison admin: verified -> optimised                                                                              |
-| MISSING: paired tokens comparison shop: raw_dom -> generated                                                                               |
-| MISSING: paired tokens comparison shop: generated -> verified                                                                              |
-| MISSING: paired tokens comparison shop: verified -> optimised                                                                              |
-| MISSING: paired tokens comparison admin: raw_dom -> generated                                                                              |
-| MISSING: paired tokens comparison admin: generated -> verified                                                                             |
-| MISSING: paired tokens comparison admin: verified -> optimised                                                                             |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/evalx/run.json optimisation_selection.shop                                           |
-| MISSING: /Users/ananyaganesan/specx-shawshank/results/evalx/run.json optimisation_selection.admin                                          |
+| status                                                                                                                                              |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------|
+| MISSING: completed /Users/shashankbhat/Projects/ai_project/specx/results/evalx/run.json                                                             |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/raw_dom.jsonl                                                                 |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/raw_dom.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)    |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/raw_dom.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)   |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/generated.jsonl                                                               |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/generated.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)  |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/generated.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25) |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/verified.jsonl                                                                |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/verified.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)   |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/verified.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)  |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/optimised.jsonl                                                               |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/optimised.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)  |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/trials/optimised.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25) |
+| MISSING: paired success comparison shop: raw_dom -> generated                                                                                       |
+| MISSING: paired success comparison shop: generated -> verified                                                                                      |
+| MISSING: paired success comparison shop: verified -> optimised                                                                                      |
+| MISSING: paired success comparison admin: raw_dom -> generated                                                                                      |
+| MISSING: paired success comparison admin: generated -> verified                                                                                     |
+| MISSING: paired success comparison admin: verified -> optimised                                                                                     |
+| MISSING: paired steps comparison shop: raw_dom -> generated                                                                                         |
+| MISSING: paired steps comparison shop: generated -> verified                                                                                        |
+| MISSING: paired steps comparison shop: verified -> optimised                                                                                        |
+| MISSING: paired steps comparison admin: raw_dom -> generated                                                                                        |
+| MISSING: paired steps comparison admin: generated -> verified                                                                                       |
+| MISSING: paired steps comparison admin: verified -> optimised                                                                                       |
+| MISSING: paired tokens comparison shop: raw_dom -> generated                                                                                        |
+| MISSING: paired tokens comparison shop: generated -> verified                                                                                       |
+| MISSING: paired tokens comparison shop: verified -> optimised                                                                                       |
+| MISSING: paired tokens comparison admin: raw_dom -> generated                                                                                       |
+| MISSING: paired tokens comparison admin: generated -> verified                                                                                      |
+| MISSING: paired tokens comparison admin: verified -> optimised                                                                                      |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/evalx/run.json optimisation_selection.shop                                           |
+| MISSING: /Users/shashankbhat/Projects/ai_project/specx/results/evalx/run.json optimisation_selection.admin                                          |
 
 Paired comparisons (B minus A; two-sided tests):
 
@@ -128,7 +282,9 @@ Paired comparisons (B minus A; two-sided tests):
 
 ## Deviations from plan
 
-# Implementation decisions
+# Decisions
+
+## Dev C — implementation and evaluation
 
 - 2026-10-16 — C integration: validate API v1 from `x-specx-api-version` with legacy body compatibility. Real Chromium/template F3/F1 and scripted C1/C3/C4/C5/C6 checks require no paid provider calls. Keep scripted trials outside benchmark cohorts; publish only measured generation/verification tables while F2/F4 and B metrics remain incomplete. See `docs/FREE_INTEGRATION.md`.
 
@@ -144,7 +300,9 @@ Paired comparisons (B minus A; two-sided tests):
 - 2026-10-15 — C8 supersedes C7's arm/export limitations: all three arms are implemented, with one baseline per app and independent revision-zero starts. The unchanged shared patch contract is projected into a provider-compatible ops/confidence response schema, then fully validated locally; envelope/provenance fields cannot be supplied by the model. Up to three PNGs precede multimodal text; text-only arms strip images. Missing screenshots are explicit and cannot support claims of vision benefit. Accepted training evidence exports `{bundle_without_screenshot, screenshot_path, accepted_patch, arm}` with content-addressed PNG sidecars and paths relative to the dataset (null when absent). No live numbers are claimed until real experiments run.
 - 2026-10-15 — C9: select the best final training-success arm independently per app from a completed F2 experiment, with ties preferring multimodal, then structured text, then text trace. Explicit arm overrides are recorded as overrides. Evaluation enforces verified revision zero, replays accepted patch histories against published final tools, preserves paired held-out cohorts and frozen model identity, and records evidence hashes for safe resume. No-accepted-patch cases explicitly report `optimised == verified` in run/metrics metadata; C10 must propagate that note into the report. Live 100-episode evaluation remains pending prerequisites and is not replaced by offline fixtures.
 - 2026-10-16 — C10: reports validate shared boundary records first, return exit 2 while still publishing explicit missing-data tables for incomplete cohorts, and exclude training/gate trials from readiness. Holm families are per metric across apps/adjacent condition comparisons; actual paired n and observed/planned family sizes are retained. C9's no-accepted-patch notes propagate to report/dashboard. Safety raw JSON is preserved; S1's undocumented detailed nesting is rendered as supplied metric paths with count context, not an invented schema. The README currently shows MISSING/n=0, not benchmark claims. The dashboard is built/tested and served locally, but browser visual QA was unavailable; live experiment outputs and final coordinated commit/tag remain pending.
-## Platform decisions (Developer A)
+## Dev A — platform
+
+One line per decision that deviates from or sharpens the plan. Newest last.
 
 - 2026-10-15 · A · `node:sqlite` (built into Node ≥ 22.13) instead of `better-sqlite3` — no native build on Node 26, one fewer dependency.
 - 2026-10-15 · A · Regex route parser instead of tree-sitter — seed-app routes are regular; tree-sitter has no prebuilt binaries for Node 26. Provenance records `parser: regex`.
