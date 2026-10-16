@@ -4,6 +4,10 @@
 
 **Goal:** by H1 the shared Python client is on `main` (B depends on it); by H5 raw-DOM baseline numbers exist; by H10 the F2/S4 loop has run three arms with a real regression gate, the four-condition benchmark is complete, and `make report` produces the seven tables; by H12 the dashboard shows them.
 
+**2026-10-16 integration checkpoint:** see [the no-paid-API validation record](FREE_INTEGRATION.md)
+for verified real-app coverage, measured F1 results, repeatable free commands, and
+the remaining C1–C10 deliverables. Scripted checks do not complete live-model milestones.
+
 **Architecture:** Python in the shared `specx` package. `specx.client` wraps the sandbox HTTP API and the schemas (plus an in-process `FakeSandbox` for offline tests). `specx.stats` is the single statistics engine (paired tests, effect sizes, bootstrap CIs, Holm–Bonferroni) used by the gate, the benchmark and B's ablations. `specx.evalx` holds the task set and the frozen Claude agent harness that runs in two modes (raw DOM actions vs WebMCP tools) through the sandbox. `specx.optim` runs the closed loop: failing trials → failure bundles → reviser (three arms) → `ToolPatch` → apply → gate → accept/reject. `specx.stats.report` folds every `results/` artefact into `numbers.json` + `REPORT.md`; the React dashboard renders that JSON.
 
 **Tech stack:** `httpx`, `jsonschema`, `pydantic`, `anthropic` (Python SDK ≥ 1.0), `scipy`, `numpy`, `pandas`, `typer`, `rich`; dashboard: Vite + React + TypeScript (no UI library).

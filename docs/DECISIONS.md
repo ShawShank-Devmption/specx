@@ -2,6 +2,8 @@
 
 ## Dev C — implementation and evaluation
 
+- 2026-10-16 — C integration: validate API v1 from `x-specx-api-version` with legacy body compatibility. Real Chromium/template F3/F1 and scripted C1/C3/C4/C5/C6 checks require no paid provider calls. Keep scripted trials outside benchmark cohorts; publish only measured generation/verification tables while F2/F4 and B metrics remain incomplete. See `docs/FREE_INTEGRATION.md`.
+
 - 2026-10-15 — C2: Holm-adjusted p-values for `[0.01, 0.04, 0.03]` are `[0.03, 0.06, 0.06]` in original order. Undefined paired standardized effects are null; success tests default to two-sided, with an explicit one-sided option for the gate.
 - 2026-10-15 — C3, approved by Developer C: keep required `success_check` unchanged and add optional non-empty `success_checks`; the primary and all additional checks must pass against one final state snapshot. Submit this additive schema change as a `contracts: …` PR for shared review. Legacy task fixtures are unchanged.
 - 2026-10-15 — Admin seed, confirmed by Developer C: exactly six users before task setup: `1 root/root123 admin active=1`, `2 bob/bob123 editor active=1`, `3 carol/carol123 viewer active=1`, `4 erin/erin123 viewer active=1`, `5 hank/hank123 editor active=1`, `6 ivy/ivy123 viewer active=1`. Dana, frank and gina are not seeded. Developer A owns `platform/seed-apps/admin/seed.sql` and implementation of these rows; this checkout does not contain that file or the admin schema yet.

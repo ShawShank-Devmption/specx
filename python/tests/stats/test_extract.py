@@ -40,6 +40,7 @@ def test_quarantine_reasons_and_replay_require_actual_matching_evidence(tmp_path
     write_jsonl(path, [*verdicts, replay, unmatched, changed])
     row = verification_table([tools_path], [path])[0]
     assert row["verified"] == 2 and row["quarantined"] == 1 and row["unverifiable"] == 0
+    # Platform concurrent verdicts evaluate preconditions/invariants, not postconditions.
     assert row["quarantine_reasons"] == {"race": 1}
     assert row["replay_determinism_rate"] == 0.5
     assert row["replay_n"] == 2 and row["replay_unmatched"] == 1

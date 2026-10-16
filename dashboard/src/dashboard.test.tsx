@@ -42,3 +42,25 @@ test('invalid numbers.json fails clearly', () => {
   assert.throws(() => parseNumbers({ schema_version: 42 }), /malformed/);
   assert.throws(() => parseNumbers(null), /Invalid/);
 });
+
+test('dashboard retains plan-required content without architecture or marketing extras', () => {
+  const data = parseNumbers({ schema_version: 1, generated_at: 'test', git_sha: 'abc123', complete: false,
+    execution: 'unknown', models: {}, missing: [], warnings: [], notes: [], t1_generation: [], t2_verification: [],
+    t3_s6: null, t4_s1: null, t5_s2: null, t6_f2: null,
+    t7_readiness: { conditions: { verified: { shop: { ...summary, n: 0, success_rate: null } } }, comparisons: [] }, quarantine: [], revisions: [] });
+  const html = renderToStaticMarkup(<Dashboard data={data} />);
+  assert.match(html, /data-theme="dark"/);
+  assert.match(html, /Evaluation dashboard/);
+  assert.doesNotMatch(html, /Report data|Success does not imply policy compliance|<footer/);
+  for (const extra of ['SYSTEM ARCHITECTURE', 'Engineering workflow', 'View workflow', 'Engineer trust', 'ENGINEERING INTELLIGENCE', 'Recorded episodes', 'Accepted revisions']) {
+    assert.doesNotMatch(html, new RegExp(extra));
+  }
+  for (const heading of ['Readiness', 'Quarantine', 'Revision log', 'Safety ML']) {
+    assert.match(html, new RegExp(`<h2>${heading}</h2>`));
+  }
+  assert.doesNotMatch(html, /Switch to light theme|Switch to dark theme|theme-toggle/);
+  assert.match(html, /Skip to benchmark evidence/);
+  assert.match(html, /class="primary-link" href="#readiness"/);
+  assert.match(html, /class="secondary-link" href="#quarantine"/);
+  assert.doesNotMatch(html, /hero-sculpture|metal-core/);
+});

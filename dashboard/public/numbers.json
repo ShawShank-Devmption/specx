@@ -1,8 +1,8 @@
 {
   "complete": false,
   "execution": "unknown",
-  "generated_at": "2026-10-15T18:54:28.051643+00:00",
-  "git_sha": "1fb0ea88cca1c434d851782175f189a12e90e78f",
+  "generated_at": "2026-10-15T19:37:31.173134+00:00",
+  "git_sha": "c9f3d02039727e77b428146afa01f97f4e8fc30e",
   "missing": [
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/evalx/run.json optimisation_selection.admin",
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/evalx/run.json optimisation_selection.shop",
@@ -16,8 +16,6 @@
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/s1/metrics.json",
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/s2/metrics.json",
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/s6/metrics.json",
-    "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/admin.tools.json (nonempty generated tool set required)",
-    "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/shop.tools.json (nonempty generated tool set required)",
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl",
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/generated.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
@@ -30,7 +28,6 @@
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl",
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl (admin: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
     "MISSING: /Users/ananyaganesan/specx-shawshank/results/trials/verified.jsonl (shop: 25 expected pairs absent; 0 unexpected pairs; n=0/25)",
-    "MISSING: /Users/ananyaganesan/specx-shawshank/results/verdicts/f1.jsonl (verification evidence)",
     "MISSING: completed /Users/ananyaganesan/specx-shawshank/results/evalx/run.json",
     "MISSING: completed /Users/ananyaganesan/specx-shawshank/results/f2/run.json",
     "MISSING: paired steps comparison admin: generated -> verified",
@@ -88,11 +85,76 @@
       "f2": {}
     }
   },
-  "quarantine": [],
+  "quarantine": [
+    {
+      "app": "shop",
+      "reasons": [
+        "race"
+      ],
+      "tool_id": "shop.place_order"
+    },
+    {
+      "app": "admin",
+      "reasons": [
+        "postcondition"
+      ],
+      "tool_id": "admin.set_role"
+    },
+    {
+      "app": "admin",
+      "reasons": [
+        "side_effect"
+      ],
+      "tool_id": "admin.delete_user"
+    }
+  ],
   "revisions": [],
   "schema_version": 1,
-  "t1_generation": [],
-  "t2_verification": [],
+  "t1_generation": [
+    {
+      "app": "admin",
+      "mean_provenance_surfaces": 3.4285714285714284,
+      "tools_ge3_surfaces": 5,
+      "tools_generated": 7
+    },
+    {
+      "app": "shop",
+      "mean_provenance_surfaces": 2.857142857142857,
+      "tools_ge3_surfaces": 3,
+      "tools_generated": 7
+    }
+  ],
+  "t2_verification": [
+    {
+      "app": "admin",
+      "generated": 0,
+      "quarantine_reasons": {
+        "postcondition": 1,
+        "side_effect": 1
+      },
+      "quarantined": 2,
+      "replay_determinism_rate": 1.0,
+      "replay_n": 7,
+      "replay_total": 7,
+      "replay_unmatched": 0,
+      "unverifiable": 0,
+      "verified": 5
+    },
+    {
+      "app": "shop",
+      "generated": 0,
+      "quarantine_reasons": {
+        "race": 1
+      },
+      "quarantined": 1,
+      "replay_determinism_rate": 1.0,
+      "replay_n": 7,
+      "replay_total": 7,
+      "replay_unmatched": 0,
+      "unverifiable": 0,
+      "verified": 6
+    }
+  ],
   "t3_s6": null,
   "t4_s1": null,
   "t5_s2": null,
@@ -351,15 +413,8 @@
     }
   },
   "table_issues": {
-    "t1_generation": [
-      "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/shop.tools.json (nonempty generated tool set required)",
-      "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/admin.tools.json (nonempty generated tool set required)"
-    ],
-    "t2_verification": [
-      "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/shop.tools.json (nonempty generated tool set required)",
-      "MISSING: /Users/ananyaganesan/specx-shawshank/results/tools/admin.tools.json (nonempty generated tool set required)",
-      "MISSING: /Users/ananyaganesan/specx-shawshank/results/verdicts/f1.jsonl (verification evidence)"
-    ],
+    "t1_generation": [],
+    "t2_verification": [],
     "t3_s6": [
       "MISSING: /Users/ananyaganesan/specx-shawshank/results/s6/metrics.json"
     ],

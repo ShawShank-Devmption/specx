@@ -13,6 +13,25 @@ from specx.client.sandbox import SandboxClient, SandboxError
 BASE = "http://sandbox.test"
 
 
+@respx.mock
+@pytest.mark.parametrize("version", ["0", "2"])
+def test_rejects_unsupported_api_version_header(version):
+    respx.get(f"{BASE}/health").respond(
+        200, headers={"x-specx-api-version": version}, json={"ok": True}
+    )
+    with SandboxClient(BASE) as sandbox, pytest.raises(SandboxError, match="api_version"):
+        sandbox.health()
+
+
+@respx.mock
+def test_accepts_platform_version_header_without_body_metadata():
+    respx.get(f"{BASE}/health").respond(
+        200, headers={"x-specx-api-version": "1"}, json={"ok": True}
+    )
+    with SandboxClient(BASE) as sandbox:
+        assert sandbox.health() == {"ok": True}
+
+
 @pytest.fixture
 def client():
     with SandboxClient(BASE) as sandbox:
